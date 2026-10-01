@@ -1,8 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <rect width="64" height="64" rx="14" fill="#15192d"/>
-  <g transform="translate(8 8) scale(2)" stroke="#34bfe5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
-    <path d="M21 3v5h-5"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+  <defs><linearGradient id="rebirth-gradient" x1="27" y1="42" x2="231" y2="212" gradientUnits="userSpaceOnUse"><stop stop-color="#5CDDFA"/><stop offset="1" stop-color="#A38FFA"/></linearGradient></defs>
+  <path d="M224 128a96 96 0 1 1-96-96c40 0 74 23 88 57" stroke="url(#rebirth-gradient)" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M171 85h53V32" stroke="url(#rebirth-gradient)" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
-

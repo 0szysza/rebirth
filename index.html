@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#34bfe5">
-  <meta name="description" content="Estimate rebirth goals for up to three accounts, with grind speed, snapshots and daily breaks.">
+  <meta name="theme-color" content="#5CDDFA">
+  <meta name="description" content="Estimate rebirth goals for up to three accounts using your own rebirth pace.">
   <title>Rebirth Calculator</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,19 +21,25 @@
     <symbol id="icon-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
     <symbol id="icon-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></symbol>
     <symbol id="icon-trend" viewBox="0 0 24 24"><path d="m3 17 6-6 4 4 8-8"/><path d="M15 7h6v6"/></symbol>
+    <symbol id="icon-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
   </svg>
 
   <header class="site-header">
     <div class="site-header__inner">
       <a class="brand" href="./" aria-label="Rebirth Calculator home">
         <span class="brand__logo" aria-hidden="true">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rotate-cw preview-icon"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+          <img src="favicon.svg" width="39" height="39" alt="">
         </span>
         <span class="brand__copy"><strong>Rebirth Calculator</strong><small>Plan your rebirth grind</small></span>
       </a>
-      <nav class="site-nav" aria-label="Pages">
-        <a class="site-nav__link site-nav__link--active" href="./" aria-current="page"><svg class="icon" aria-hidden="true"><use href="#icon-target"></use></svg>Calculator</a>
-        <a class="site-nav__link" href="https://0szysza.github.io/trackccu/"><svg class="icon" aria-hidden="true"><use href="#icon-globe"></use></svg>TrackCCU</a>
+      <nav class="tool-switcher" aria-label="Switch tool">
+        <details class="tool-menu">
+          <summary><svg class="icon" aria-hidden="true"><use href="#icon-globe"></use></svg><span>Tools</span><svg class="icon tool-menu__chevron" aria-hidden="true"><use href="#icon-chevron"></use></svg></summary>
+          <div class="tool-menu__list">
+            <a href="./" aria-current="page"><svg class="icon" aria-hidden="true"><use href="#icon-target"></use></svg><span><strong>Rebirth Calculator</strong><small>Current page</small></span></a>
+            <a href="https://0szysza.github.io/trackccu/"><svg class="icon" aria-hidden="true"><use href="#icon-globe"></use></svg><span><strong>TrackCCU</strong><small>Roblox CCU tracker</small></span></a>
+          </div>
+        </details>
       </nav>
     </div>
   </header>
@@ -41,7 +47,7 @@
   <main class="page-shell">
     <section class="page-intro">
       <h1>Rebirth calculator</h1>
-      <p>Set your rebirth counts and grind speed to see when each account reaches its goal.</p>
+      <p>Set your rebirth counts and pace to see when each account reaches its goal.</p>
     </section>
 
     <section class="account-selector" aria-labelledby="account-selector-title">
@@ -54,23 +60,31 @@
     </section>
 
     <section class="schedule-panel" aria-labelledby="schedule-title">
-      <div class="panel-heading"><svg class="icon" aria-hidden="true"><use href="#icon-clock"></use></svg><h2 id="schedule-title">Grind schedule</h2></div>
+      <div class="panel-heading"><svg class="icon" aria-hidden="true"><use href="#icon-clock"></use></svg><h2 id="schedule-title">Time settings</h2></div>
       <div class="schedule-grid">
         <div class="field"><label for="snapshot">Current snapshot</label><input id="snapshot" type="datetime-local" required></div>
         <div class="field"><label for="forecast">Forecast at</label><input id="forecast" type="datetime-local" required></div>
-        <div class="field"><label for="break-start">Break starts</label><input id="break-start" type="time" value="00:00" required></div>
-        <div class="field"><label for="break-end">Grind resumes</label><input id="break-end" type="time" value="08:30" required></div>
       </div>
-      <p class="schedule-note">The break repeats every day. Times use your device's time zone.</p>
+      <p class="schedule-note">Times use your device's time zone. Estimates assume continuous rebirths at the pace you enter.</p>
     </section>
 
     <div class="results-heading"><div><svg class="icon" aria-hidden="true"><use href="#icon-trend"></use></svg><h2>Account estimates</h2></div><p>Values update as you type.</p></div>
     <div class="accounts-grid" id="accounts-grid" data-count="2"></div>
-    <p class="page-note">Estimates assume a steady pace. The forecast keeps counting rebirths after a goal is reached.</p>
+    <p class="page-note">The forecast keeps counting rebirths after a goal is reached.</p>
   </main>
 
-  <footer class="site-footer"><div><strong>Rebirth Calculator</strong><span>Made by the creator of TrackCCU.</span></div><a href="https://0szysza.github.io/trackccu/"><svg class="icon" aria-hidden="true"><use href="#icon-globe"></use></svg>Visit TrackCCU</a></footer>
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <div class="site-footer__contact">
+        <p>Want a new feature added here? Let me know!</p>
+        <div class="site-footer__links">
+          <a href="https://discord.com/users/0szysza" target="_blank" rel="noopener noreferrer"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="#5865F2" aria-hidden="true"><path d="M19.888 7.335a5.134 5.134 0 0 0-2.893-2.418a9.144 9.144 0 0 0-2.275-.508a9.963 9.963 0 0 0-.508 1.038a15.039 15.039 0 0 0-4.56 0a11.372 11.372 0 0 0-.519-1.038c-.752.082-1.493.249-2.208.497a5.123 5.123 0 0 0-2.904 2.44a16.176 16.176 0 0 0-1.91 9.717a16.562 16.562 0 0 0 4.98 2.528a4.339 4.339 0 0 0 1.104-1.777c-.54-.202-1.06-.45-1.557-.74c-.089-.122.254-.32.364-.354a11.826 11.826 0 0 0 10.037 0c.1 0 .453.232.364.354c-.441.342-1.424.585-1.59.828a7.4 7.4 0 0 0 1.105 1.69a16.628 16.628 0 0 0 4.99-2.53a16.232 16.232 0 0 0-2.02-9.727M8.669 14.7a1.943 1.943 0 0 1-1.92-1.955a1.943 1.943 0 0 1 1.92-1.91a1.942 1.942 0 0 1 1.933 1.965a1.943 1.943 0 0 1-1.933 1.9m6.625 0a1.943 1.943 0 0 1-1.932-1.944a1.932 1.932 0 1 1 3.865.034a1.932 1.932 0 0 1-1.933 1.899z"/></svg><span>0szysza</span></a>
+          <a href="https://x.com/0szysza" target="_blank" rel="noopener noreferrer"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 432 384" fill="currentColor" style="color:#1DA1F2" aria-hidden="true"><path d="M383 105v11q0 45-16.5 88.5t-47 79.5t-79 58.5T134 365q-73 0-134-39q10 1 21 1q61 0 109-37q-29-1-51.5-18T48 229q8 2 16 2q12 0 23-4q-30-6-50-30t-20-55v-1q19 10 40 11q-39-27-39-73q0-24 12-44q33 40 79.5 64T210 126q-2-10-2-20q0-36 25.5-61.5T295 19q38 0 64 27q30-6 56-21q-10 31-39 48q27-3 51-13q-18 26-44 45z"/></svg><span>@0szysza</span></a>
+        </div>
+      </div>
+      <div class="site-footer__notes"><p>Estimates use the rebirth counts and pace you enter.</p><p>Not affiliated with Roblox Corporation or any game developer.</p></div>
+    </div>
+  </footer>
   <noscript><p class="noscript">Enable JavaScript to use the calculator.</p></noscript>
 </body>
 </html>
-

@@ -1,10 +1,10 @@
-import { activeMilliseconds, calculate } from "./calc.mjs";
+import { calculate } from "./calc.mjs";
 
 const $ = (id) => document.getElementById(id);
 const accounts = [
-  { key: "main", name: "Main", detail: "Primary account", className: "main", current: "8108", target: "9999", rate: "158" },
-  { key: "alt", name: "Alt 1", detail: "Alternate account", className: "alt", current: "1882", target: "7777", rate: "117" },
-  { key: "alt2", name: "Alt 2", detail: "Alternate account", className: "alt2", current: "", target: "", rate: "" },
+  { key: "main", name: "Main", detail: "Primary account", className: "main", current: "8108", target: "9999", rebirths: "158" },
+  { key: "alt", name: "Alt 1", detail: "Alternate account", className: "alt", current: "1882", target: "7777", rebirths: "117" },
+  { key: "alt2", name: "Alt 2", detail: "Alternate account", className: "alt2", current: "", target: "", rebirths: "" },
 ];
 const numberFormat = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
 const decimalFormat = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
@@ -13,7 +13,7 @@ const dateFormat = new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "num
 let accountCount = 2;
 
 function accountMarkup(account) {
-  const { key, name, detail, className, current, target, rate } = account;
+  const { key, name, detail, className, current, target, rebirths } = account;
   return `
     <section class="account-card account-card--${className}" data-account="${key}" aria-labelledby="${key}-title">
       <div class="account-card__head">
@@ -25,22 +25,18 @@ function accountMarkup(account) {
         <div class="field"><label for="${key}-current">Current rebirths</label><input id="${key}-current" type="number" min="0" step="1" inputmode="numeric" value="${current}"></div>
         <div class="field"><label for="${key}-target">Target rebirths</label><input id="${key}-target" type="number" min="0" step="1" inputmode="numeric" value="${target}"></div>
       </div>
-      <fieldset class="rate-choice"><legend>Grind speed</legend><div class="rate-choice__options">
-        <label><input type="radio" name="${key}-rate-mode" value="manual" checked><span>Enter speed</span></label>
-        <label><input type="radio" name="${key}-rate-mode" value="measured"><span>From 2 snapshots</span></label>
+      <fieldset class="pace-group"><legend>Rebirths per interval</legend><div class="pace-fields">
+        <div class="field"><label for="${key}-rebirths">Rebirths</label><input id="${key}-rebirths" type="number" min="0" step="any" inputmode="decimal" value="${rebirths}"></div>
+        <span class="pace-fields__per" aria-hidden="true">per</span>
+        <div class="field"><label for="${key}-minutes">Minutes</label><input id="${key}-minutes" type="number" min="0.01" step="any" inputmode="decimal" value="10"></div>
       </div></fieldset>
-      <div class="manual-rate"><div class="field"><label for="${key}-rate">Rebirths per 10 minutes</label><div class="rate-unit"><input id="${key}-rate" type="number" min="0" step="any" inputmode="decimal" value="${rate}"><span>/ 10 min</span></div></div></div>
-      <div class="measured-rate" hidden><div class="measured-rate__fields">
-        <div class="field"><label for="${key}-previous">Previous rebirths</label><input id="${key}-previous" type="number" min="0" step="1" inputmode="numeric"></div>
-        <div class="field"><label for="${key}-previous-time">Previous snapshot</label><input id="${key}-previous-time" type="datetime-local"></div>
-      </div><p class="measured-rate__hint">Uses the current count and snapshot above. <strong id="${key}-measured-rate"></strong></p></div>
       <div class="account-card__results" aria-live="polite">
         <div class="progress-line"><span>Progress to target</span><strong id="${key}-progress-text">—</strong></div>
         <div class="progress-track" role="progressbar" aria-label="${name} progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="${key}-progress-bar"></span></div>
         <div class="eta-block"><span>Estimated finish</span><strong id="${key}-eta">—</strong><small id="${key}-eta-date">—</small></div>
         <div class="stat-grid">
           <div class="stat"><span>Remaining</span><strong id="${key}-remaining">—</strong></div>
-          <div class="stat"><span>Active grind</span><strong id="${key}-duration">—</strong></div>
+          <div class="stat"><span>Time needed</span><strong id="${key}-duration">—</strong></div>
           <div class="stat stat--wide"><span>At forecast time</span><strong id="${key}-projected">—</strong></div>
         </div>
         <p class="account-message" id="${key}-message"></p>
@@ -59,44 +55,22 @@ function readDate(input) {
 function readNumber(input) {
   return input.value.trim() === "" ? NaN : Number(input.value);
 }
-function readClock(input) {
-  const parts = /^(\d{2}):(\d{2})$/.exec(input.value);
-  return parts ? Number(parts[1]) * 60 + Number(parts[2]) : NaN;
-}
 function formatDuration(milliseconds) {
   if (milliseconds === null) return "No pace";
+  if (!Number.isFinite(milliseconds)) return "Out of range";
   const minutes = Math.ceil(milliseconds / 60000);
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
   return hours ? `${hours}h ${String(rest).padStart(2, "0")}m` : `${rest}m`;
 }
 
-function rateForAccount(key, current, common) {
-  const mode = document.querySelector(`input[name="${key}-rate-mode"]:checked`)?.value;
-  const measuredOutput = $(`${key}-measured-rate`);
-  if (mode === "manual") {
-    measuredOutput.textContent = "";
-    const value = readNumber($(`${key}-rate`));
-    return Number.isFinite(value) && value >= 0 ? { value } : { error: "Enter rebirths per 10 minutes." };
+function paceForAccount(key) {
+  const rebirths = readNumber($(`${key}-rebirths`));
+  const minutes = readNumber($(`${key}-minutes`));
+  if (!Number.isFinite(rebirths) || rebirths < 0 || !Number.isFinite(minutes) || minutes <= 0) {
+    return { error: "Enter rebirths and a number of minutes above zero." };
   }
-  const previous = readNumber($(`${key}-previous`));
-  const previousTime = readDate($(`${key}-previous-time`));
-  if (!Number.isFinite(previous) || previous < 0 || !previousTime) {
-    measuredOutput.textContent = "";
-    return { error: "Enter the previous count and snapshot time." };
-  }
-  const elapsedMinutes = activeMilliseconds(previousTime, common.snapshot, common.breakStart, common.breakEnd) / 60000;
-  if (elapsedMinutes <= 0) {
-    measuredOutput.textContent = "";
-    return { error: "The snapshots need active grind time between them." };
-  }
-  if (current < previous) {
-    measuredOutput.textContent = "";
-    return { error: "The current count is below the previous count." };
-  }
-  const value = (current - previous) / elapsedMinutes * 10;
-  measuredOutput.textContent = `Calculated speed: ${decimalFormat.format(value)} / 10 min`;
-  return { value };
+  return { rebirths, minutes };
 }
 
 function clearResult(key, message, neutral = false) {
@@ -116,16 +90,16 @@ function renderAccount(key, common) {
     clearResult(key, "Enter the current count and target.", blank);
     return;
   }
-  if (!common.snapshot || !common.forecast || !Number.isFinite(common.breakStart) || !Number.isFinite(common.breakEnd)) {
-    clearResult(key, "Complete the grind schedule above.");
+  if (!common.snapshot || !common.forecast) {
+    clearResult(key, "Set both times above.");
     return;
   }
-  const rate = rateForAccount(key, current, common);
-  if (rate.error) {
-    clearResult(key, rate.error, $(`${key}-rate`).value.trim() === "");
+  const pace = paceForAccount(key);
+  if (pace.error) {
+    clearResult(key, pace.error, $(`${key}-rebirths`).value.trim() === "");
     return;
   }
-  const result = calculate({ current, target, ratePerTen: rate.value, ...common });
+  const result = calculate({ current, target, ...pace, ...common });
   if (result.error) {
     clearResult(key, result.error);
     return;
@@ -141,9 +115,9 @@ function renderAccount(key, common) {
     $(`${key}-eta-date`).textContent = dateFormat.format(displayedEta);
     $(`${key}-quick-eta`).textContent = result.remaining === 0 ? "Done" : timeFormat.format(displayedEta);
   } else {
-    $(`${key}-eta`).textContent = rate.value === 0 ? "No pace" : "Out of range";
+    $(`${key}-eta`).textContent = pace.rebirths === 0 ? "No pace" : "Out of range";
     $(`${key}-eta-date`).textContent = "—";
-    $(`${key}-quick-eta`).textContent = rate.value === 0 ? "No pace" : "—";
+    $(`${key}-quick-eta`).textContent = pace.rebirths === 0 ? "No pace" : "—";
   }
   $(`${key}-projected`).textContent = result.projected === null ? "—" : `≈ ${numberFormat.format(result.projected)} rebirths`;
   $(`${key}-message`).textContent = result.projected === null ? "Forecast time must be after the current snapshot." : "";
@@ -151,14 +125,11 @@ function renderAccount(key, common) {
 }
 
 function render() {
-  const common = { snapshot: readDate($("snapshot")), forecast: readDate($("forecast")), breakStart: readClock($("break-start")), breakEnd: readClock($("break-end")) };
+  const common = { snapshot: readDate($("snapshot")), forecast: readDate($("forecast")) };
   for (const [index, account] of accounts.entries()) {
     const card = document.querySelector(`[data-account="${account.key}"]`);
     card.hidden = index >= accountCount;
     if (card.hidden) continue;
-    const mode = document.querySelector(`input[name="${account.key}-rate-mode"]:checked`)?.value;
-    card.querySelector(".manual-rate").hidden = mode !== "manual";
-    card.querySelector(".measured-rate").hidden = mode !== "measured";
     renderAccount(account.key, common);
   }
 }
@@ -182,5 +153,14 @@ document.querySelectorAll("input").forEach((input) => {
   input.addEventListener("input", render);
   input.addEventListener("change", render);
 });
+const toolMenu = document.querySelector(".tool-menu");
+document.addEventListener("click", (event) => {
+  if (!toolMenu.contains(event.target)) toolMenu.open = false;
+});
+toolMenu.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    toolMenu.open = false;
+    toolMenu.querySelector("summary").focus();
+  }
+});
 render();
-
