@@ -7,9 +7,12 @@ const accounts = [
   { key: "alt2", name: "Alt 2", detail: "Alternate account", className: "alt2", current: "", target: "", rebirths: "" },
 ];
 const numberFormat = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
-const decimalFormat = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
+const percentFormat = new Intl.NumberFormat("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const timeFormat = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit" });
 const dateFormat = new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+const shortDateFormat = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" });
+const accountCalculations = new Map();
+const previewPositions = new Map();
 let accountCount = 2;
 
 function accountMarkup(account) {
@@ -32,7 +35,15 @@ function accountMarkup(account) {
       </div></fieldset>
       <div class="account-card__results" aria-live="polite">
         <div class="progress-line"><span>Progress to target</span><strong id="${key}-progress-text">—</strong></div>
-        <div class="progress-track" role="progressbar" aria-label="${name} progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="${key}-progress-bar"></span></div>
+        <div class="progress-inspector">
+          <div class="progress-track" role="progressbar" tabindex="0" aria-label="${name} progress" aria-description="Hover, tap, or use arrow keys to inspect a point" aria-describedby="${key}-progress-tooltip" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="${key}-progress-bar"></span></div>
+          <span class="progress-hover-marker" id="${key}-progress-marker" hidden aria-hidden="true"></span>
+          <div class="progress-tooltip" id="${key}-progress-tooltip" role="tooltip" aria-live="off" hidden>
+            <div class="progress-tooltip__head"><strong id="${key}-hover-percent">—</strong><span id="${key}-hover-count">—</span></div>
+            <div class="progress-tooltip__row"><span>At this point</span><strong id="${key}-hover-time">—</strong></div>
+            <div class="progress-tooltip__row"><span>Estimated finish</span><strong id="${key}-hover-finish">—</strong></div>
+          </div>
+        </div>
         <div class="eta-block"><span>Estimated finish</span><strong id="${key}-eta">—</strong><small id="${key}-eta-date">—</small></div>
         <div class="stat-grid">
           <div class="stat"><span>Remaining</span><strong id="${key}-remaining">—</strong></div>
@@ -73,11 +84,57 @@ function paceForAccount(key) {
   return { rebirths, minutes };
 }
 
+function formatDateTime(date) {
+  const rounded = new Date(Math.round(date.getTime() / 60000) * 60000);
+  return `${shortDateFormat.format(rounded)}, ${timeFormat.format(rounded)}`;
+}
+
+function hideProgressTooltip(key) {
+  $(`${key}-progress-tooltip`).hidden = true;
+  $(`${key}-progress-marker`).hidden = true;
+  previewPositions.delete(key);
+}
+
+function showProgressTooltip(key, rawPercent) {
+  const data = accountCalculations.get(key);
+  if (!data) return;
+  const percent = Math.max(0, Math.min(100, Math.round(rawPercent * 10) / 10));
+  const count = Math.round(data.target * percent / 100);
+  let pointTime = "Already reached";
+  if (count > data.current) {
+    const timestamp = data.snapshot.getTime() + (count - data.current) * data.pace.minutes / data.pace.rebirths * 60000;
+    pointTime = data.pace.rebirths === 0 ? "No pace"
+      : Number.isFinite(timestamp) && Math.abs(timestamp) <= 8640000000000000
+        ? formatDateTime(new Date(timestamp)) : "Out of range";
+  }
+  const goalTime = data.result.remaining === 0 ? "Goal reached"
+    : data.result.eta ? formatDateTime(data.result.eta)
+      : data.pace.rebirths === 0 ? "No pace" : "Out of range";
+  $(`${key}-hover-percent`).textContent = `${percentFormat.format(percent)}%`;
+  $(`${key}-hover-count`).textContent = `${numberFormat.format(count)} rebirths`;
+  $(`${key}-hover-time`).textContent = pointTime;
+  $(`${key}-hover-finish`).textContent = goalTime;
+
+  const tooltip = $(`${key}-progress-tooltip`);
+  const marker = $(`${key}-progress-marker`);
+  const track = $(`${key}-progress-bar`).parentElement;
+  tooltip.hidden = false;
+  marker.hidden = false;
+  const x = track.clientWidth * percent / 100;
+  const halfWidth = tooltip.offsetWidth / 2;
+  tooltip.style.left = `${Math.max(halfWidth, Math.min(track.clientWidth - halfWidth, x))}px`;
+  marker.style.left = `${x}px`;
+  previewPositions.set(key, percent);
+}
+
 function clearResult(key, message, neutral = false) {
+  accountCalculations.delete(key);
+  hideProgressTooltip(key);
   for (const id of ["progress-text", "eta", "eta-date", "remaining", "duration", "projected"]) $(`${key}-${id}`).textContent = "—";
   $(`${key}-quick-eta`).textContent = "—";
   $(`${key}-progress-bar`).style.width = "0%";
   $(`${key}-progress-bar`).parentElement.setAttribute("aria-valuenow", "0");
+  $(`${key}-progress-bar`).parentElement.setAttribute("aria-valuetext", "Progress unavailable");
   $(`${key}-message`).textContent = message;
   $(`${key}-message`).classList.toggle("is-neutral", neutral);
 }
@@ -104,9 +161,11 @@ function renderAccount(key, common) {
     clearResult(key, result.error);
     return;
   }
-  $(`${key}-progress-text`).textContent = `${decimalFormat.format(result.progress)}%`;
+  accountCalculations.set(key, { current, target, pace, snapshot: common.snapshot, result });
+  $(`${key}-progress-text`).textContent = `${percentFormat.format(result.progress)}%`;
   $(`${key}-progress-bar`).style.width = `${result.progress}%`;
-  $(`${key}-progress-bar`).parentElement.setAttribute("aria-valuenow", String(Math.round(result.progress)));
+  $(`${key}-progress-bar`).parentElement.setAttribute("aria-valuenow", result.progress.toFixed(1));
+  $(`${key}-progress-bar`).parentElement.setAttribute("aria-valuetext", `${percentFormat.format(result.progress)}%, ${numberFormat.format(current)} of ${numberFormat.format(target)} rebirths`);
   $(`${key}-remaining`).textContent = numberFormat.format(result.remaining);
   $(`${key}-duration`).textContent = formatDuration(result.activeDuration);
   if (result.eta) {
@@ -122,6 +181,7 @@ function renderAccount(key, common) {
   $(`${key}-projected`).textContent = result.projected === null ? "—" : `≈ ${numberFormat.format(result.projected)} rebirths`;
   $(`${key}-message`).textContent = result.projected === null ? "Forecast time must be after the current snapshot." : "";
   $(`${key}-message`).classList.remove("is-neutral");
+  if (!$(`${key}-progress-tooltip`).hidden) showProgressTooltip(key, previewPositions.get(key) ?? result.progress);
 }
 
 function render() {
@@ -129,12 +189,47 @@ function render() {
   for (const [index, account] of accounts.entries()) {
     const card = document.querySelector(`[data-account="${account.key}"]`);
     card.hidden = index >= accountCount;
-    if (card.hidden) continue;
+    if (card.hidden) {
+      hideProgressTooltip(account.key);
+      continue;
+    }
     renderAccount(account.key, common);
   }
 }
 
 $("accounts-grid").innerHTML = accounts.map(accountMarkup).join("");
+document.querySelectorAll(".progress-track").forEach((track) => {
+  const key = track.closest("[data-account]").dataset.account;
+  const inspectPointer = (event) => {
+    const rect = track.getBoundingClientRect();
+    showProgressTooltip(key, (event.clientX - rect.left) / rect.width * 100);
+  };
+  track.addEventListener("pointermove", inspectPointer);
+  track.addEventListener("pointerdown", inspectPointer);
+  track.addEventListener("pointerleave", (event) => {
+    if (event.pointerType !== "touch") hideProgressTooltip(key);
+  });
+  track.addEventListener("focus", () => showProgressTooltip(key, previewPositions.get(key) ?? accountCalculations.get(key)?.result.progress ?? 0));
+  track.addEventListener("blur", () => hideProgressTooltip(key));
+  track.addEventListener("keydown", (event) => {
+    if (!["ArrowLeft", "ArrowRight", "Home", "End", "Escape"].includes(event.key)) return;
+    event.preventDefault();
+    if (event.key === "Escape") {
+      hideProgressTooltip(key);
+      track.blur();
+      return;
+    }
+    const current = previewPositions.get(key) ?? accountCalculations.get(key)?.result.progress ?? 0;
+    const next = event.key === "Home" ? 0 : event.key === "End" ? 100
+      : current + (event.key === "ArrowRight" ? 0.1 : -0.1);
+    showProgressTooltip(key, next);
+  });
+});
+document.addEventListener("pointerdown", (event) => {
+  if (!event.target.closest(".progress-inspector")) {
+    for (const account of accounts) hideProgressTooltip(account.key);
+  }
+});
 document.querySelectorAll(".account-count").forEach((button) => button.addEventListener("click", () => {
   accountCount = Number(button.dataset.count);
   $("accounts-grid").dataset.count = String(accountCount);
