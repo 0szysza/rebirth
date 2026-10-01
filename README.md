@@ -1,10 +1,10 @@
 # Rebirth Calculator
 
-Kalkulator czasu do celu dla kont **Main** i **Alt**, inspirowany wyglądem TrackCCU.
+A static rebirth goal calculator for one, two or three accounts: Main, Alt 1 and Alt 2. It follows the visual style of [TrackCCU](https://0szysza.github.io/trackccu/).
 
-Wpisz aktualną liczbę rebirthów, cel i tempo na 10 minut. Tempo można też wyliczyć z dwóch pomiarów. Kalkulator pokazuje pozostały aktywny czas, szacowaną godzinę osiągnięcia celu i stan na wybraną datę. Codzienną przerwę można zmienić; domyślnie trwa od 00:00 do 08:30.
+Enter the current and target rebirth counts and a speed per 10 minutes. Speed can also be calculated from two timestamped snapshots. The page estimates active grind time, finish time and the rebirth count at a chosen forecast time. The daily break defaults to 00:00–08:30 and can be changed.
 
-Przykładowe wartości pochodzą z wcześniejszych obliczeń i można je dowolnie edytować. Cena pojedynczego rebirthu nie jest potrzebna, jeśli tempo jest już podane w rebirthach na 10 minut.
+The initial Main and Alt 1 values are editable examples. Alt 2 starts empty. Calculations run in the browser and are not saved.
 
-Strona jest statyczna i działa bez konta oraz bez zapisywania danych. Po włączeniu GitHub Pages dla gałęzi `main` i katalogu `/ (root)` będzie dostępna pod adresem <https://0szysza.github.io/rebirth/>.
+Published with GitHub Pages at <https://0szysza.github.io/rebirth/>.
 

@@ -73,7 +73,7 @@ export function calculate({ current, target, ratePerTen, snapshot, forecast, bre
   if (![current, target, ratePerTen, breakStart, breakEnd].every(Number.isFinite)
     || current < 0 || target < 0 || ratePerTen < 0
     || !Number.isFinite(snapshot?.getTime()) || !Number.isFinite(forecast?.getTime())) {
-    return { error: "Sprawdź wpisane wartości i daty." };
+    return { error: "Check the values and dates." };
   }
 
   const remaining = Math.max(0, target - current);

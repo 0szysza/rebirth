@@ -1,99 +1,76 @@
 <!doctype html>
-<html lang="pl">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#0b0d17">
-    <meta name="description" content="Policz czas do celu dla Main i Alt, uwzględniając tempo rebirthów i przerwę w grindzie.">
-    <title>Rebirth Calculator</title>
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
-    <script type="module" src="app.js"></script>
-  </head>
-  <body>
-    <header class="site-header">
-      <div class="site-header__inner">
-        <a class="brand" href="./" aria-label="Rebirth Calculator, strona główna">
-          <span class="brand__mark" aria-hidden="true">
-            <svg viewBox="0 0 40 40" fill="none"><path d="M30.2 12.6A13 13 0 1 0 33 20" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/><path d="m29.8 5.9 1 7.8-7.7-.5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20" cy="20" r="4.1" fill="currentColor"/></svg>
-          </span>
-          <span class="brand__name">REBIRTH<span>CALC</span></span>
-        </a>
-        <nav class="header-nav" aria-label="Główna nawigacja">
-          <span class="header-nav__current" aria-current="page">Kalkulator</span>
-          <a href="https://0szysza.github.io/trackccu/" target="_blank" rel="noopener noreferrer">TrackCCU <span aria-hidden="true">↗</span></a>
-        </nav>
+<html lang="en" class="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#34bfe5">
+  <meta name="description" content="Estimate rebirth goals for up to three accounts, with grind speed, snapshots and daily breaks.">
+  <title>Rebirth Calculator</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <svg class="icon-library" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="icon-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="icon-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></symbol>
+    <symbol id="icon-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol>
+    <symbol id="icon-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+    <symbol id="icon-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></symbol>
+    <symbol id="icon-trend" viewBox="0 0 24 24"><path d="m3 17 6-6 4 4 8-8"/><path d="M15 7h6v6"/></symbol>
+  </svg>
+
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a class="brand" href="./" aria-label="Rebirth Calculator home">
+        <span class="brand__logo" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rotate-cw preview-icon"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+        </span>
+        <span class="brand__copy"><strong>Rebirth Calculator</strong><small>Plan your rebirth grind</small></span>
+      </a>
+      <nav class="site-nav" aria-label="Pages">
+        <a class="site-nav__link site-nav__link--active" href="./" aria-current="page"><svg class="icon" aria-hidden="true"><use href="#icon-target"></use></svg>Calculator</a>
+        <a class="site-nav__link" href="https://0szysza.github.io/trackccu/"><svg class="icon" aria-hidden="true"><use href="#icon-globe"></use></svg>TrackCCU</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page-shell">
+    <section class="page-intro">
+      <h1>Rebirth calculator</h1>
+      <p>Set your rebirth counts and grind speed to see when each account reaches its goal.</p>
+    </section>
+
+    <section class="account-selector" aria-labelledby="account-selector-title">
+      <div class="selector-heading"><svg class="icon" aria-hidden="true"><use href="#icon-users"></use></svg><h2 id="account-selector-title">Accounts</h2></div>
+      <div class="account-selector__buttons" role="group" aria-label="Number of accounts">
+        <button class="account-count" type="button" data-count="1" aria-pressed="false">1 Account</button>
+        <button class="account-count is-active" type="button" data-count="2" aria-pressed="true">2 Accounts</button>
+        <button class="account-count" type="button" data-count="3" aria-pressed="false">3 Accounts</button>
       </div>
-    </header>
+    </section>
 
-    <main class="page-shell">
-      <div class="intro">
-        <div class="intro__copy">
-          <div class="eyebrow"><span class="eyebrow__bar"></span> PLANER GRINDU</div>
-          <h1>Rebirth <span>Calculator</span></h1>
-          <p>Sprawdź, kiedy Main i Alt dobiją do celu. Kalkulator uwzględnia tempo oraz nocną przerwę.</p>
-        </div>
-        <div class="intro__badge" aria-live="polite"><span class="intro__badge-title">NAJBLIŻSZE CELE</span><div><span>Main</span><strong id="main-quick-eta">—</strong></div><div><span>Alt</span><strong id="alt-quick-eta">—</strong></div></div>
+    <section class="schedule-panel" aria-labelledby="schedule-title">
+      <div class="panel-heading"><svg class="icon" aria-hidden="true"><use href="#icon-clock"></use></svg><h2 id="schedule-title">Grind schedule</h2></div>
+      <div class="schedule-grid">
+        <div class="field"><label for="snapshot">Current snapshot</label><input id="snapshot" type="datetime-local" required></div>
+        <div class="field"><label for="forecast">Forecast at</label><input id="forecast" type="datetime-local" required></div>
+        <div class="field"><label for="break-start">Break starts</label><input id="break-start" type="time" value="00:00" required></div>
+        <div class="field"><label for="break-end">Grind resumes</label><input id="break-end" type="time" value="08:30" required></div>
       </div>
+      <p class="schedule-note">The break repeats every day. Times use your device's time zone.</p>
+    </section>
 
-      <section class="setup-card" aria-labelledby="setup-title">
-        <div class="section-heading">
-          <div><span class="section-kicker">01 / CZAS</span><h2 id="setup-title">Ustawienia grindu</h2></div>
-          <p>Przykładowe wartości z rozmowy. Wpisz swoje aktualne dane.</p>
-        </div>
-        <div class="setup-grid">
-          <div class="field"><label for="snapshot">Czas pomiaru</label><input id="snapshot" type="datetime-local" required><span class="field__hint">Od tego momentu liczymy postęp.</span></div>
-          <div class="field"><label for="forecast">Prognoza na</label><input id="forecast" type="datetime-local" required><span class="field__hint">Domyślnie najbliższa północ.</span></div>
-          <div class="field"><label for="break-start">Przerwa od</label><input id="break-start" type="time" value="00:00" required><span class="field__hint">Bez naliczania rebirthów.</span></div>
-          <div class="field"><label for="break-end">Wznowienie o</label><input id="break-end" type="time" value="08:30" required><span class="field__hint">Przerwa powtarza się codziennie.</span></div>
-        </div>
-      </section>
+    <div class="results-heading"><div><svg class="icon" aria-hidden="true"><use href="#icon-trend"></use></svg><h2>Account estimates</h2></div><p>Values update as you type.</p></div>
+    <div class="accounts-grid" id="accounts-grid" data-count="2"></div>
+    <p class="page-note">Estimates assume a steady pace. The forecast keeps counting rebirths after a goal is reached.</p>
+  </main>
 
-      <div class="accounts-heading"><div><span class="section-kicker">02 / KONTA</span><h2>Twoje konta</h2></div><p>Wyniki przeliczają się podczas wpisywania.</p></div>
-      <div class="accounts-grid">
-        <section class="account-card account-card--main" data-account="main" aria-labelledby="main-title">
-          <div class="account-card__top"><div class="account-card__identity"><span class="account-card__number">01</span><div><span class="account-card__label">KONTO GŁÓWNE</span><h3 id="main-title">Main</h3></div></div><span class="account-card__symbol" aria-hidden="true">M</span></div>
-          <div class="account-fields">
-            <div class="field"><label for="main-current">Aktualne rebirthy</label><input id="main-current" type="number" min="0" step="1" inputmode="numeric" value="8108" required></div>
-            <div class="field"><label for="main-target">Cel</label><input id="main-target" type="number" min="0" step="1" inputmode="numeric" value="9999" required></div>
-          </div>
-          <fieldset class="rate-choice"><legend>Jak wyznaczyć tempo?</legend><div class="rate-choice__options"><label><input type="radio" name="main-rate-mode" value="manual" checked><span>Wpisz tempo</span></label><label><input type="radio" name="main-rate-mode" value="measured"><span>Z 2 pomiarów</span></label></div></fieldset>
-          <div class="manual-rate"><div class="field"><label for="main-rate">Rebirthy / 10 min</label><div class="input-unit"><input id="main-rate" type="number" min="0" step="any" inputmode="decimal" value="158" required><span>/ 10 min</span></div></div></div>
-          <div class="measured-rate" hidden><div class="account-fields"><div class="field"><label for="main-previous">Poprzedni stan</label><input id="main-previous" type="number" min="0" step="1" inputmode="numeric"></div><div class="field"><label for="main-previous-time">Czas poprzedniego pomiaru</label><input id="main-previous-time" type="datetime-local"></div></div><p class="measured-rate__hint">Aktualny stan i czas pomiaru pobieramy z pól powyżej. <strong id="main-measured-rate"></strong></p></div>
-          <div class="results" aria-live="polite">
-            <div class="progress-heading"><span>Postęp do celu</span><strong id="main-progress-text">—</strong></div>
-            <div class="progress-track" role="progressbar" aria-label="Postęp Main" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="main-progress-bar"></span></div>
-            <div class="result-hero"><span class="result-hero__label">Cel osiągniesz</span><strong id="main-eta">—</strong><span id="main-eta-date">—</span></div>
-            <div class="result-grid"><div><span>Pozostało</span><strong id="main-remaining">—</strong></div><div><span>Aktywny grind</span><strong id="main-duration">—</strong></div><div class="result-grid__wide"><span>Stan w wybranym terminie</span><strong id="main-projected">—</strong></div></div>
-            <p class="result-message" id="main-message"></p>
-          </div>
-        </section>
-
-        <section class="account-card account-card--alt" data-account="alt" aria-labelledby="alt-title">
-          <div class="account-card__top"><div class="account-card__identity"><span class="account-card__number">02</span><div><span class="account-card__label">DRUGIE KONTO</span><h3 id="alt-title">Alt</h3></div></div><span class="account-card__symbol" aria-hidden="true">A</span></div>
-          <div class="account-fields">
-            <div class="field"><label for="alt-current">Aktualne rebirthy</label><input id="alt-current" type="number" min="0" step="1" inputmode="numeric" value="1882" required></div>
-            <div class="field"><label for="alt-target">Cel</label><input id="alt-target" type="number" min="0" step="1" inputmode="numeric" value="7777" required></div>
-          </div>
-          <fieldset class="rate-choice"><legend>Jak wyznaczyć tempo?</legend><div class="rate-choice__options"><label><input type="radio" name="alt-rate-mode" value="manual" checked><span>Wpisz tempo</span></label><label><input type="radio" name="alt-rate-mode" value="measured"><span>Z 2 pomiarów</span></label></div></fieldset>
-          <div class="manual-rate"><div class="field"><label for="alt-rate">Rebirthy / 10 min</label><div class="input-unit"><input id="alt-rate" type="number" min="0" step="any" inputmode="decimal" value="117" required><span>/ 10 min</span></div></div></div>
-          <div class="measured-rate" hidden><div class="account-fields"><div class="field"><label for="alt-previous">Poprzedni stan</label><input id="alt-previous" type="number" min="0" step="1" inputmode="numeric"></div><div class="field"><label for="alt-previous-time">Czas poprzedniego pomiaru</label><input id="alt-previous-time" type="datetime-local"></div></div><p class="measured-rate__hint">Aktualny stan i czas pomiaru pobieramy z pól powyżej. <strong id="alt-measured-rate"></strong></p></div>
-          <div class="results" aria-live="polite">
-            <div class="progress-heading"><span>Postęp do celu</span><strong id="alt-progress-text">—</strong></div>
-            <div class="progress-track" role="progressbar" aria-label="Postęp Alt" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="alt-progress-bar"></span></div>
-            <div class="result-hero"><span class="result-hero__label">Cel osiągniesz</span><strong id="alt-eta">—</strong><span id="alt-eta-date">—</span></div>
-            <div class="result-grid"><div><span>Pozostało</span><strong id="alt-remaining">—</strong></div><div><span>Aktywny grind</span><strong id="alt-duration">—</strong></div><div class="result-grid__wide"><span>Stan w wybranym terminie</span><strong id="alt-projected">—</strong></div></div>
-            <p class="result-message" id="alt-message"></p>
-          </div>
-        </section>
-      </div>
-      <p class="page-note">Prognozy zakładają stałe tempo. Godziny są liczone według strefy czasowej Twojego urządzenia; po osiągnięciu celu prognoza nadal nalicza rebirthy.</p>
-    </main>
-    <footer class="site-footer"><span>REBIRTH CALCULATOR</span><a href="https://0szysza.github.io/trackccu/" target="_blank" rel="noopener noreferrer">Od twórcy TrackCCU <span aria-hidden="true">↗</span></a></footer>
-    <noscript><div class="noscript">Włącz JavaScript, aby zobaczyć wyniki kalkulatora.</div></noscript>
-  </body>
+  <footer class="site-footer"><div><strong>Rebirth Calculator</strong><span>Made by the creator of TrackCCU.</span></div><a href="https://0szysza.github.io/trackccu/"><svg class="icon" aria-hidden="true"><use href="#icon-globe"></use></svg>Visit TrackCCU</a></footer>
+  <noscript><p class="noscript">Enable JavaScript to use the calculator.</p></noscript>
+</body>
 </html>
 
