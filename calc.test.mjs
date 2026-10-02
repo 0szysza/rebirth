@@ -98,3 +98,36 @@ test('invalid and unrepresentable intervals do not produce a forecast', () => {
   }
   assert.ok(calculateInterval({ ...interval, snapshot: new Date(NaN) }).error);
 });
+
+test('an explicit end time determines the gain and stays fixed on return', () => {
+  const end = new Date('2026-10-02T15:15:00Z');
+  const first = calculateInterval({ ...interval, end, now: snapshot });
+  const later = calculateInterval({ ...interval, end: new Date(end.toISOString()), now: new Date('2026-10-02T13:00:00Z') });
+  assert.equal(first.totalGain, 2925);
+  assert.equal(first.finalCount, 3925);
+  assert.equal(later.projected, 1900);
+  assert.equal(later.eta.getTime(), end.getTime());
+  assert.equal(later.activeDuration, 135 * 60000);
+  const finished = calculateInterval({ ...interval, end, now: new Date('2026-10-03T12:00:00Z') });
+  assert.equal(finished.projected, first.finalCount);
+  assert.equal(finished.progress, 100);
+});
+
+test('a deadline across midnight and zero pace preserve time progress', () => {
+  const snapshot = new Date('2026-10-02T23:30:00Z');
+  const end = new Date('2026-10-03T01:00:00Z');
+  const now = new Date('2026-10-03T00:15:00Z');
+  const result = calculateInterval({ ...interval, snapshot, end, now });
+  assert.equal(result.totalGain, 1350);
+  assert.equal(result.progress, 50);
+  assert.equal(result.eta.getTime(), end.getTime());
+  const paused = calculateInterval({ ...interval, snapshot, end, now, rebirths: 0 });
+  assert.equal(paused.projected, interval.current);
+  assert.equal(paused.progress, 50);
+});
+
+test('deadlines must be valid and strictly after the saved starting point', () => {
+  for (const end of [null, new Date(NaN), snapshot, new Date('2026-10-02T11:59:00Z')]) {
+    assert.ok(calculateInterval({ ...interval, end, now: snapshot }).error);
+  }
+});

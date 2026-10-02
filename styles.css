@@ -56,20 +56,16 @@ h1,h2,h3,p{margin:0}
 .account-count.is-active{border-color:#34425f;background:#253049;color:#f8fafc}
 .calculation-modes{margin-top:14px}
 .calculation-mode{display:inline-flex;align-items:center;justify-content:center;gap:7px}
-.calculation-mode .icon{width:15px;height:15px}
-.interval-settings{display:flex;align-items:flex-end;flex-wrap:wrap;gap:14px;margin-bottom:16px;padding:14px 16px;border:1px solid #262d4a;border-radius:11px;background:#15192d}
-.interval-duration{display:flex;align-items:flex-end;gap:12px}
-.interval-settings__label{display:flex;align-items:center;gap:7px;align-self:center;color:#a8b5c9;font-size:13px;font-weight:600}
-.interval-settings__label .icon{color:#5CDDFA}
-.interval-duration .field{width:115px}
-.interval-presets{display:flex;align-items:center;gap:6px}
-.interval-presets button,.interval-start{min-height:42px;padding:0 12px;border:1px solid #303a55;border-radius:8px;background:#0e1324;color:#94a3b8;font-size:13px;font-weight:600;cursor:pointer}
-.interval-presets button:hover,.interval-start:hover{border-color:#53617c;color:#f8fafc}
-.interval-presets button[aria-pressed=true]{border-color:#5CDDFA;background:#24475b;color:#91efff}
-.interval-start{display:inline-flex;align-items:center;justify-content:center;gap:7px;margin-left:auto;color:#cbd5e1}
+.interval-settings{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:18px 24px;margin-bottom:16px;padding:16px;border:1px solid #262d4a;border-radius:11px;background:#15192d}
+.interval-mode-field{display:flex;flex-direction:column;gap:7px}
+.interval-settings__label{display:flex;align-items:center;gap:7px;min-height:16px;color:#a8b5c9;font-size:12px;font-weight:700;line-height:16px}
+.interval-settings__label .icon{width:16px;height:16px;color:#5CDDFA}
+.interval-duration{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:300px}
+.interval-end-field{width:300px}
+.duration-modes .account-count{min-height:32px}
 body[data-calculator-mode=interval] .account-card__fields{grid-template-columns:1fr}
 body[data-calculator-mode=interval] .eta-block strong{overflow-wrap:anywhere}
-@media(max-width:680px){.calculation-modes{display:flex;width:100%}.interval-settings{display:grid;grid-template-columns:1fr auto;padding:14px;gap:12px}.interval-duration{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:10px}.interval-settings__label{grid-column:1/-1}.interval-duration .field{width:auto}.interval-presets button,.interval-start{min-height:44px}.interval-start{margin-left:0}.calculation-mode{flex:1}}
+@media(max-width:680px){.calculation-modes{display:flex;width:100%}.interval-settings{display:grid;grid-template-columns:1fr;padding:14px;gap:16px}.interval-duration,.interval-end-field{width:100%}.duration-modes{display:flex}.duration-mode{flex:1}.calculation-mode{flex:1}}
 
 .field{min-width:0}
 .field label{display:block;margin-bottom:7px;color:#a8b5c9;font-size:12px;font-weight:700}
@@ -106,11 +102,11 @@ body[data-calculator-mode=interval] .eta-block strong{overflow-wrap:anywhere}
 .date-picker__day:hover{background:#2b3955;color:#fff}
 .date-picker__day.is-today:not(.is-selected){border-color:#546480;color:#5CDDFA}
 .date-picker__day.is-selected{border-color:#5CDDFA;background:#24475b;color:#91efff}
-.date-picker__time{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:11px;padding-top:12px;border-top:1px solid #303a55}
+.date-picker__time{display:flex;flex-direction:column;align-items:stretch;gap:9px;margin-top:11px;padding-top:12px;border-top:1px solid #303a55}
 .date-picker__time-title{display:flex;align-items:center;gap:6px;color:#a8b5c9;font-size:12px;font-weight:700}
 .date-picker__time-title .icon{width:15px;height:15px;color:#5CDDFA}
-.date-picker__time-fields{display:grid;grid-template-columns:58px auto 58px;align-items:end;gap:5px}
-.date-picker__time-fields .field label{margin-bottom:4px;font-size:10px;text-align:center}
+.date-picker__time-fields{display:grid;grid-template-columns:1fr auto 1fr;align-items:end;gap:9px}
+.date-picker__time-fields .field label{margin-bottom:5px;font-size:11px}
 .date-picker__time-fields .field input{height:35px;padding-left:8px;font-size:12px}
 .date-picker__time-fields .number-control input{padding-right:25px}
 .date-picker__time-fields .number-control__steps{right:3px;width:19px;padding-left:2px}
@@ -205,7 +201,6 @@ body[data-calculator-mode=interval] .eta-block strong{overflow-wrap:anywhere}
 .help-tip:hover .help-tip__bubble,.help-tip:focus .help-tip__bubble{display:block}
 .date-picker__nav{width:34px;height:34px}
 .date-picker__day{height:36px}
-.date-picker__time-fields{grid-template-columns:78px auto 78px}
 .date-picker__time-fields .field input{height:42px;font-size:16px;padding-right:29px}
 .date-picker__time-fields .number-control__steps{right:5px;width:21px;height:32px}
 .date-picker__footer button{min-height:38px;padding:0 12px;font-size:12px}

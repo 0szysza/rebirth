@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261002-15">
-  <script type="module" src="app.js?v=20261002-15"></script>
+  <link rel="stylesheet" href="styles.css?v=20261002-16">
+  <script type="module" src="app.js?v=20261002-16"></script>
 <link rel="canonical" href="https://0szysza.github.io/rebirth/">
 <meta name="description" content="Track your BGSI rebirth grind for up to three named accounts. Estimate a goal finish time or rebirths gained over a custom time interval, with saved inputs and your own pace.">
 <meta property="og:type" content="website">
@@ -74,7 +74,7 @@
         <p id="calculator-description">Set your rebirth counts and pace to see when each account reaches its goal.</p>
         <div class="calculation-modes account-selector__buttons" role="group" aria-label="Calculation mode">
           <button class="calculation-mode account-count is-active" type="button" data-mode="goal" aria-pressed="true">Target goal</button>
-          <button class="calculation-mode account-count" type="button" data-mode="interval" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#icon-clock"></use></svg>Time interval</button>
+          <button class="calculation-mode account-count" type="button" data-mode="interval" aria-pressed="false">Time interval</button>
         </div>
       </div>
       <div class="selector-controls">
@@ -98,17 +98,25 @@
     </section>
 
     <section class="interval-settings" id="interval-settings" aria-label="Time interval" hidden>
-      <div class="interval-duration">
-        <span class="interval-settings__label"><svg class="icon" aria-hidden="true"><use href="#icon-clock"></use></svg>Duration</span>
+      <div class="interval-mode-field">
+        <span class="interval-settings__label" id="duration-mode-label"><svg class="icon" aria-hidden="true"><use href="#icon-clock"></use></svg><span>Duration</span></span>
+        <div class="duration-modes account-selector__buttons" role="group" aria-labelledby="duration-mode-label">
+          <button class="duration-mode account-count is-active" type="button" data-duration-mode="duration" aria-pressed="true">For a duration</button>
+          <button class="duration-mode account-count" type="button" data-duration-mode="until" aria-pressed="false">Until a time</button>
+        </div>
+      </div>
+      <div class="interval-duration" id="duration-fields">
         <div class="field"><label for="interval-hours">Hours</label><input id="interval-hours" type="number" min="0" step="any" inputmode="decimal" value="2"></div>
         <div class="field"><label for="interval-minutes">Minutes</label><input id="interval-minutes" type="number" min="0" max="59" step="1" inputmode="numeric" value="0"></div>
       </div>
-      <div class="interval-presets" role="group" aria-label="Quick duration">
-        <button type="button" data-hours="2" aria-pressed="true">2h</button>
-        <button type="button" data-hours="6" aria-pressed="false">6h</button>
-        <button type="button" data-hours="10" aria-pressed="false">10h</button>
+      <div class="field interval-end-field" id="end-time-field" hidden>
+        <label for="interval-end">End date and time</label>
+        <div class="date-control">
+          <input id="interval-end" type="text" readonly aria-haspopup="dialog" aria-controls="interval-end-picker" aria-expanded="false" autocomplete="off">
+          <button class="date-control__open" type="button" data-date-for="interval-end" aria-label="Choose interval end date and time" aria-haspopup="dialog" aria-controls="interval-end-picker" aria-expanded="false"><svg class="icon" aria-hidden="true"><use href="#icon-calendar"></use></svg></button>
+          <div class="date-picker" id="interval-end-picker" role="dialog" aria-label="Interval end date and time" hidden></div>
+        </div>
       </div>
-      <button class="interval-start" id="interval-start-now" type="button"><svg class="icon" aria-hidden="true"><use href="#icon-clock"></use></svg>Start now</button>
     </section>
 
     <div class="accounts-grid" id="accounts-grid" role="group" aria-label="Account estimates" data-count="2"></div>

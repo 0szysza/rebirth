@@ -1,4 +1,4 @@
-import { calculate, calculateInterval, restoreSnapshot } from "./calc.mjs?v=20261002-6";
+import { calculate, calculateInterval, restoreSnapshot } from "./calc.mjs?v=20261002-7";
 
 const $ = (id) => document.getElementById(id);
 const accounts = [
@@ -19,6 +19,7 @@ const accountCalculations = new Map();
 const previewPositions = new Map();
 let accountCount = 2;
 let calculatorMode = "goal";
+let durationMode = "duration";
 let modeStates = {};
 document.body.dataset.accountCount = String(accountCount);
 
@@ -221,15 +222,20 @@ function renderAccount(key, common) {
 function render() {
   const common = { snapshot: readDate($("snapshot")), now: new Date() };
   if (calculatorMode === "interval") {
-    const hours = readNumber($("interval-hours"));
-    const minutes = readNumber($("interval-minutes"));
-    common.durationMinutes = hours * 60 + minutes;
-    if (!Number.isFinite(hours) || hours < 0 || !Number.isInteger(minutes) || minutes < 0 || minutes > 59 || !Number.isFinite(common.durationMinutes) || common.durationMinutes <= 0) {
-      common.intervalError = "Enter a duration above zero (minutes: 0–59).";
+    if (durationMode === "until") {
+      common.end = readDate($("interval-end"));
+      common.durationMinutes = common.end && common.snapshot ? (common.end - common.snapshot) / 60000 : NaN;
+      if (!Number.isFinite(common.durationMinutes) || common.durationMinutes <= 0) {
+        common.intervalError = "Choose an end date and time after the interval start.";
+      }
+    } else {
+      const hours = readNumber($("interval-hours"));
+      const minutes = readNumber($("interval-minutes"));
+      common.durationMinutes = hours * 60 + minutes;
+      if (!Number.isFinite(hours) || hours < 0 || !Number.isInteger(minutes) || minutes < 0 || minutes > 59 || !Number.isFinite(common.durationMinutes) || common.durationMinutes <= 0) {
+        common.intervalError = "Enter a duration above zero (minutes: 0–59).";
+      }
     }
-    document.querySelectorAll("[data-hours]").forEach(button => {
-      button.setAttribute("aria-pressed", String(hours === Number(button.dataset.hours) && minutes === 0));
-    });
   }
   for (const [index, account] of accounts.entries()) {
     const card = document.querySelector(`[data-account="${account.key}"]`);
@@ -380,7 +386,7 @@ window.addEventListener("resize", () => {
   if (pickerState.openId) positionDatePicker();
 });
 
-for (const id of ["snapshot"]) {
+for (const id of ["snapshot", "interval-end"]) {
   const input = $(id);
   input.addEventListener("click", () => openDatePicker(id));
   input.addEventListener("keydown", (event) => {
@@ -590,6 +596,8 @@ function captureModeState() {
     snapshot: $("snapshot").dataset.value,
     hours: $("interval-hours").value,
     minutes: $("interval-minutes").value,
+    durationMode,
+    end: $("interval-end").dataset.value || null,
     accounts: Object.fromEntries(accounts.map(({key}) => [key,
       Object.fromEntries(accountFields.map(field => [field, $(`${key}-${field}`).value]))])),
   };
@@ -600,6 +608,14 @@ function applyModeState(state) {
   setDateValue("snapshot", calculatorMode === "interval" && Number.isFinite(saved.getTime()) ? saved : restoreSnapshot(state.snapshot), calculatorMode === "interval");
   for (const [id, field, fallback] of [["interval-hours", "hours", "2"], ["interval-minutes", "minutes", "0"]]) {
     $(id).value = typeof state[field] === "string" && state[field].length <= 100 ? state[field] : fallback;
+  }
+  durationMode = state.durationMode === "until" ? "until" : "duration";
+  const end = typeof state.end === "string" ? new Date(state.end) : null;
+  if (end && Number.isFinite(end.getTime())) {
+    setDateValue("interval-end", end, true);
+  } else {
+    delete $("interval-end").dataset.value;
+    $("interval-end").value = "";
   }
   for (const {key} of accounts) {
     for (const field of accountFields) {
@@ -618,7 +634,7 @@ function syncCalculatorMode() {
     : "Set your rebirth counts and pace to see when each account reaches its goal.";
   document.querySelector('label[for="snapshot"]').textContent = isInterval ? "Interval starts at" : "Counts recorded at";
   $("snapshot-help").textContent = isInterval
-    ? "Enter the counts you had at this starting time. The interval keeps the same end when you return. Use Start now when entering fresh counts."
+    ? "Enter the counts you had at this starting time. The interval keeps the same end when you return. Choose Now in this calendar when recording fresh counts."
     : "Enter the rebirth counts you had at this time. This saved starting point keeps your finish time fixed. Estimates assume you keep rebirthing at the entered pace.";
   $("snapshot-picker").setAttribute("aria-label", isInterval ? "Interval start date and time" : "Recorded date and time");
   document.querySelector('[data-date-for="snapshot"]').setAttribute("aria-label", isInterval ? "Choose interval start date and time" : "Choose recorded date and time");
@@ -637,6 +653,33 @@ function syncCalculatorMode() {
     $(`${key}-hover-finish-label`).textContent = isInterval ? "Interval ends" : "Estimated finish";
     hideProgressTooltip(key);
   }
+  syncDurationMode();
+}
+
+function syncDurationMode() {
+  $("duration-fields").hidden = durationMode !== "duration";
+  $("end-time-field").hidden = durationMode !== "until";
+  document.querySelectorAll(".duration-mode").forEach(button => {
+    const active = button.dataset.durationMode === durationMode;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+}
+
+function setDurationMode(mode) {
+  if (!["duration", "until"].includes(mode) || mode === durationMode) return;
+  closeDatePicker();
+  if (mode === "until" && !readDate($("interval-end"))) {
+    const duration = readNumber($("interval-hours")) * 60 + readNumber($("interval-minutes"));
+    const end = new Date(readDate($("snapshot")).getTime() + duration * 60000);
+    setDateValue("interval-end", Number.isFinite(end.getTime()) && duration > 0
+      ? end : new Date(readDate($("snapshot")).getTime() + 120 * 60000), true);
+  }
+  durationMode = mode;
+  accounts.forEach(({key}) => hideProgressTooltip(key));
+  syncDurationMode();
+  render();
+  saveState();
 }
 
 function setCalculatorMode(mode) {
@@ -644,7 +687,7 @@ function setCalculatorMode(mode) {
   saveState();
   closeDatePicker();
   accounts.forEach(account => closeAccountNameEditor(account, false, false));
-  if (!modeStates[mode]) modeStates[mode] = { ...captureModeState(), snapshot: new Date().toISOString() };
+  if (!modeStates[mode]) modeStates[mode] = { ...captureModeState(), snapshot: new Date().toISOString(), durationMode: "duration", end: null };
   calculatorMode = mode;
   applyModeState(modeStates[mode]);
   syncCalculatorMode();
@@ -688,16 +731,7 @@ function setAccountCount(count, persist = true) {
 
 document.querySelectorAll(".account-count[data-count]").forEach((button) => button.addEventListener("click", () => setAccountCount(Number(button.dataset.count))));
 document.querySelectorAll(".calculation-mode").forEach(button => button.addEventListener("click", () => setCalculatorMode(button.dataset.mode)));
-document.querySelectorAll("[data-hours]").forEach(button => button.addEventListener("click", () => {
-  $("interval-hours").value = button.dataset.hours;
-  $("interval-minutes").value = "0";
-  render(); saveState();
-}));
-$("interval-start-now").addEventListener("click", () => {
-  closeDatePicker();
-  setDateValue("snapshot", new Date(), true);
-  render(); saveState();
-});
+document.querySelectorAll(".duration-mode").forEach(button => button.addEventListener("click", () => setDurationMode(button.dataset.durationMode)));
 setDateValue("snapshot", new Date());
 restoreState();
 syncCalculatorMode();

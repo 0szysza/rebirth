@@ -14,12 +14,12 @@ Track your rebirth grind toward a target or across a fixed time interval, with s
 | Separate account colors | Cyan, purple and pink make the three accounts easy to distinguish. |
 | Starting count and target | Set the rebirth count you had at the recorded time and the goal for each account. |
 | Custom rebirth pace | Enter a rebirth amount per any positive number of minutes. Vector step buttons accompany the editable fields. |
-| Custom interval | Use 2h, 6h or 10h, or enter hours and minutes. Start now or choose a saved start with the custom calendar. |
+| Custom interval | Choose **For a duration** to enter hours and minutes, or **Until a time** to select an exact end date and time. Set the start with the custom calendar. |
 | Recorded starting time | A custom calendar and time picker set the date and time when those counts were recorded. The starting point stays saved. |
 | Live estimates | Current estimated count, progress, remaining rebirths, time left and an ETA update as time passes. |
 | Precise progress inspection | Hover, tap or use arrow keys to inspect a point to **0.1%**, including its count, estimated time and goal finish time. |
 | Completed goals | Estimates continue counting after the target while retaining the original goal time. Earlier points show approximate historical estimates. |
-| Device-local saving | Names, account count and the selected calculation mode survive reopening. Each mode keeps separate inputs and a fixed starting timestamp; interval duration is saved too. |
+| Device-local saving | Names, account count and the selected calculation mode survive reopening. Each mode keeps separate inputs and a fixed starting timestamp; the duration option, hours/minutes and end time are saved too. |
 | Inline help | Small help controls explain the recorded starting time. |
 | Responsive layout | Inputs and results sit side by side on desktop, with stacked sections on smaller screens. |
 | Shared navigation | The Tools dropdown opens CCU Tracker; the header arrow opens the tool hub. Social links stay in the footer. |
@@ -43,11 +43,11 @@ Rename accounts with the pencil icon. The green check saves, the red X cancels, 
 
 1. Select **Time interval** and choose how many accounts to track.
 2. Enter the starting count and rebirth pace for each account.
-3. Choose **2h**, **6h** or **10h**, or enter custom **Hours** and **Minutes**.
-4. Use **Start now** after entering fresh counts, or set **Interval starts at** with the calendar.
+3. Set **Interval starts at** with the calendar. Its **Now** button selects the current time when recording fresh counts.
+4. In **Duration**, select **For a duration** and enter **Hours** and **Minutes**, or select **Until a time** and choose an **End date and time**. Choose the following date for a finish after midnight.
 5. Read **Rebirths at interval end**, **Rebirths gained**, **Estimated now** and **Time left**.
 
-The progress bar measures elapsed time. Inspect a point for the count, gained rebirths and timestamp at that part of the interval. Returning later preserves the end time. A completed interval stops its estimate at the end; Start now begins another interval using the entered counts.
+The progress bar measures elapsed time. Inspect a point for the count, gained rebirths and timestamp at that part of the interval. Returning later preserves the end time. A completed interval stops its estimate at the end. Record fresh starting counts and select **Now** in the start calendar to begin again; in **Until a time**, also choose a new end time.
 
 ## Calculation model
 
@@ -73,4 +73,4 @@ Estimated now  = C + clamp(elapsed minutes since S, 0, D) × R / M
 Time progress  = clamp(elapsed minutes since S / D, 0, 1) × 100%
 ~~~
 
-Duration must be positive. A zero rebirth pace still gives a valid interval: the count stays unchanged while the timer advances. The two modes keep independent inputs and starting times in device-local storage.
+In **Until a time**, `D` is the difference in minutes between the selected end and the recorded start. The end must be after the start. Duration must be positive. A zero rebirth pace still gives a valid interval: the count stays unchanged while the timer advances. The two modes keep independent inputs and starting times in device-local storage.

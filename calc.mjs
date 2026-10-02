@@ -28,14 +28,19 @@ export function restoreSnapshot(value, fallback = new Date()) {
   return date;
 }
 
-export function calculateInterval({ current, rebirths, minutes, durationMinutes, snapshot = new Date(), now = new Date() }) {
+export function calculateInterval({ current, rebirths, minutes, durationMinutes, end, snapshot = new Date(), now = new Date() }) {
+  // An explicit deadline stays fixed even when the page is opened again later.
+  if (end !== undefined) {
+    if (!Number.isFinite(end?.getTime()) || !Number.isFinite(snapshot?.getTime())) return { error: "Check the values." };
+    durationMinutes = (end.getTime() - snapshot.getTime()) / 60000;
+  }
   if (![current, rebirths, minutes, durationMinutes].every(Number.isFinite)
     || current < 0 || rebirths < 0 || minutes <= 0 || durationMinutes <= 0
     || !Number.isFinite(snapshot?.getTime()) || !Number.isFinite(now?.getTime())) {
     return { error: "Check the values." };
   }
   const duration = durationMinutes * 60000;
-  const endTime = snapshot.getTime() + duration;
+  const endTime = end === undefined ? snapshot.getTime() + duration : end.getTime();
   const totalGain = durationMinutes * rebirths / minutes;
   const finalCount = current + totalGain;
   if (![duration, endTime, totalGain, finalCount].every(Number.isFinite) || Math.abs(endTime) > 8640000000000000) {
