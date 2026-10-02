@@ -1,8 +1,8 @@
-export function calculate({ current, target, rebirths, minutes, snapshot, forecast }) {
+export function calculate({ current, target, rebirths, minutes, snapshot = new Date() }) {
   if (![current, target, rebirths, minutes].every(Number.isFinite)
     || current < 0 || target < 0 || rebirths < 0 || minutes <= 0
-    || !Number.isFinite(snapshot?.getTime()) || !Number.isFinite(forecast?.getTime())) {
-    return { error: "Check the values and dates." };
+    || !Number.isFinite(snapshot?.getTime())) {
+    return { error: "Check the values." };
   }
 
   const remaining = Math.max(0, target - current);
@@ -11,9 +11,5 @@ export function calculate({ current, target, rebirths, minutes, snapshot, foreca
   const finishTime = activeDuration === null ? NaN : snapshot.getTime() + activeDuration;
   const eta = remaining === 0 ? new Date(snapshot)
     : Number.isFinite(finishTime) && finishTime <= 8640000000000000 ? new Date(finishTime) : null;
-  const forecastElapsed = forecast >= snapshot ? forecast.getTime() - snapshot.getTime() : null;
-  const projected = forecastElapsed === null ? null
-    : current + forecastElapsed / 60000 * rebirths / minutes;
-
-  return { remaining, progress, activeDuration, eta, projected };
+  return { remaining, progress, activeDuration, eta };
 }

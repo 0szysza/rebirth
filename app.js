@@ -1,4 +1,4 @@
-import { calculate } from "./calc.mjs";
+import { calculate } from "./calc.mjs?v=20261002-2";
 
 const $ = (id) => document.getElementById(id);
 const accounts = [
@@ -29,7 +29,7 @@ function accountMarkup(account) {
         <div class="field"><label for="${key}-current">Current rebirths</label><input id="${key}-current" type="number" min="0" step="1" inputmode="numeric" value="${current}"></div>
         <div class="field"><label for="${key}-target">Target rebirths</label><input id="${key}-target" type="number" min="0" step="1" inputmode="numeric" value="${target}"></div>
       </div>
-      <fieldset class="pace-group"><legend><span>Rebirths per interval</span><button class="help-tip" type="button" aria-label="What is rebirth pace?" aria-describedby="${key}-pace-help">?<span class="help-tip__bubble" id="${key}-pace-help" role="tooltip">How many rebirths you complete in the number of minutes you enter. Estimates assume you keep this pace.</span></button></legend><div class="pace-fields">
+      <fieldset class="pace-group" aria-label="Rebirth pace"><div class="pace-fields">
         <div class="field"><label for="${key}-rebirths">Rebirths</label><input id="${key}-rebirths" type="number" min="0" step="any" inputmode="decimal" value="${rebirths}"></div>
         <span class="pace-fields__per" aria-hidden="true">per</span>
         <div class="field"><label for="${key}-minutes">Minutes</label><input id="${key}-minutes" type="number" min="0.01" step="any" inputmode="decimal" value="10"></div>
@@ -49,30 +49,12 @@ function accountMarkup(account) {
         <div class="stat-grid">
           <div class="stat"><span>Remaining</span><strong id="${key}-remaining">—</strong></div>
           <div class="stat"><span>Time needed</span><strong id="${key}-duration">—</strong></div>
-          <div class="stat stat--wide"><span>At forecast time</span><strong id="${key}-projected">—</strong></div>
         </div>
         <p class="account-message" id="${key}-message"></p>
       </div>
     </section>`;
 }
 
-function localInputValue(date) {
-  const two = (value) => String(value).padStart(2, "0");
-  return `${date.getFullYear()}-${two(date.getMonth() + 1)}-${two(date.getDate())}T${two(date.getHours())}:${two(date.getMinutes())}`;
-}
-const dateInputFormat = new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
-const calendarMonthFormat = new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric" });
-const calendarDayFormat = new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-function setDateValue(id, date) {
-  const input = $(id);
-  input.dataset.value = localInputValue(date);
-  input.value = dateInputFormat.format(date);
-}
-function readDate(input) {
-  const value = input.dataset.value;
-  const date = new Date(value);
-  return value && Number.isFinite(date.getTime()) ? date : null;
-}
 function readNumber(input) {
   return input.value.trim() === "" ? NaN : Number(input.value);
 }
@@ -140,7 +122,7 @@ function showProgressTooltip(key, rawPercent) {
 function clearResult(key, message, neutral = false) {
   accountCalculations.delete(key);
   hideProgressTooltip(key);
-  for (const id of ["progress-text", "eta", "eta-date", "remaining", "duration", "projected"]) $(`${key}-${id}`).textContent = "—";
+  for (const id of ["progress-text", "eta", "eta-date", "remaining", "duration"]) $(`${key}-${id}`).textContent = "—";
   $(`${key}-quick-eta`).textContent = "—";
   $(`${key}-progress-bar`).style.width = "0%";
   $(`${key}-progress-bar`).parentElement.setAttribute("aria-valuenow", "0");
@@ -155,10 +137,6 @@ function renderAccount(key, common) {
   if (!Number.isFinite(current) || !Number.isFinite(target) || current < 0 || target < 0) {
     const blank = $(`${key}-current`).value.trim() === "" || $(`${key}-target`).value.trim() === "";
     clearResult(key, blank ? "" : "Counts must be zero or greater.");
-    return;
-  }
-  if (!common.snapshot || !common.forecast) {
-    clearResult(key, "Set both times above.");
     return;
   }
   const pace = paceForAccount(key);
@@ -189,14 +167,13 @@ function renderAccount(key, common) {
     $(`${key}-eta-date`).textContent = "—";
     $(`${key}-quick-eta`).textContent = pace.rebirths === 0 ? "No pace" : "—";
   }
-  $(`${key}-projected`).textContent = result.projected === null ? "—" : `≈ ${numberFormat.format(result.projected)} rebirths`;
-  $(`${key}-message`).textContent = result.projected === null ? "Forecast time must be after the current snapshot." : "";
+  $(`${key}-message`).textContent = "";
   $(`${key}-message`).classList.remove("is-neutral");
   if (!$(`${key}-progress-tooltip`).hidden) showProgressTooltip(key, previewPositions.get(key) ?? result.progress);
 }
 
 function render() {
-  const common = { snapshot: readDate($("snapshot")), forecast: readDate($("forecast")) };
+  const common = { snapshot: new Date() };
   for (const [index, account] of accounts.entries()) {
     const card = document.querySelector(`[data-account="${account.key}"]`);
     card.hidden = index >= accountCount;
@@ -249,170 +226,6 @@ document.addEventListener("click", (event) => {
   stepNumber(button.closest(".number-control").querySelector("input"), Number(button.dataset.direction));
 });
 
-const pickerState = { openId: null, draft: null, year: 0, month: 0 };
-const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-const twoDigits = (value) => String(value).padStart(2, "0");
-
-function syncPickerTime() {
-  if (!pickerState.openId || !pickerState.draft) return;
-  const picker = $(`${pickerState.openId}-picker`);
-  const hourInput = picker.querySelector('[data-time-unit="hour"]');
-  const minuteInput = picker.querySelector('[data-time-unit="minute"]');
-  if (!hourInput || !minuteInput) return;
-  const hours = Number(hourInput.value);
-  const minutes = Number(minuteInput.value);
-  pickerState.draft.setHours(Number.isFinite(hours) && hourInput.value !== "" ? Math.min(23, Math.max(0, Math.trunc(hours))) : pickerState.draft.getHours());
-  pickerState.draft.setMinutes(Number.isFinite(minutes) && minuteInput.value !== "" ? Math.min(59, Math.max(0, Math.trunc(minutes))) : pickerState.draft.getMinutes(), 0, 0);
-}
-
-function renderDatePicker() {
-  const { openId, draft, year, month } = pickerState;
-  if (!openId) return;
-  const picker = $(`${openId}-picker`);
-  const offset = (new Date(year, month, 1).getDay() + 6) % 7;
-  const days = new Date(year, month + 1, 0).getDate();
-  const today = new Date();
-  const cells = Array.from({ length: offset }, () => '<span class="date-picker__empty" aria-hidden="true"></span>');
-  for (let day = 1; day <= days; day += 1) {
-    const date = new Date(year, month, day);
-    const selected = sameDay(date, draft);
-    const isToday = sameDay(date, today);
-    cells.push(`<button type="button" class="date-picker__day${selected ? " is-selected" : ""}${isToday ? " is-today" : ""}" data-day="${day}" aria-label="${calendarDayFormat.format(date)}" aria-pressed="${selected}">${day}</button>`);
-  }
-  picker.innerHTML = `
-    <div class="date-picker__header">
-      <button type="button" class="date-picker__nav" data-calendar-action="previous" aria-label="Previous month"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
-      <strong>${calendarMonthFormat.format(new Date(year, month, 1))}</strong>
-      <button type="button" class="date-picker__nav" data-calendar-action="next" aria-label="Next month"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
-    </div>
-    <div class="date-picker__weekdays" aria-hidden="true"><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span></div>
-    <div class="date-picker__days" role="group" aria-label="Choose a day">${cells.join("")}</div>
-    <div class="date-picker__time">
-      <div class="date-picker__time-title"><svg class="icon" aria-hidden="true"><use href="#icon-clock"></use></svg><span>Time</span></div>
-      <div class="date-picker__time-fields">
-        <div class="field"><label for="${openId}-hour">Hour</label><input id="${openId}-hour" type="number" min="0" max="23" step="1" value="${twoDigits(draft.getHours())}" data-time-unit="hour" data-step-label="hour" data-wrap="true" data-pad="2" inputmode="numeric"></div>
-        <span class="date-picker__time-colon" aria-hidden="true">:</span>
-        <div class="field"><label for="${openId}-minute">Minute</label><input id="${openId}-minute" type="number" min="0" max="59" step="1" value="${twoDigits(draft.getMinutes())}" data-time-unit="minute" data-step-label="minute" data-wrap="true" data-pad="2" inputmode="numeric"></div>
-      </div>
-    </div>
-    <div class="date-picker__footer"><button type="button" data-calendar-action="now">Now</button><span></span><button type="button" data-calendar-action="cancel">Cancel</button><button type="button" class="date-picker__apply" data-calendar-action="apply">Apply</button></div>`;
-  initNumberControls(picker);
-  if (!picker.hidden) positionDatePicker();
-}
-
-function positionDatePicker() {
-  const id = pickerState.openId;
-  if (!id) return;
-  const picker = $(`${id}-picker`);
-  picker.classList.remove("is-above", "is-floating");
-  const field = $(id).getBoundingClientRect();
-  const height = picker.getBoundingClientRect().height;
-  if (window.innerHeight - field.bottom >= height + 8) return;
-  picker.classList.add(field.top >= height + 8 ? "is-above" : "is-floating");
-}
-
-function closeDatePicker(restoreFocus = false) {
-  const id = pickerState.openId;
-  if (!id) return;
-  $(`${id}-picker`).hidden = true;
-  $(id).setAttribute("aria-expanded", "false");
-  document.querySelector(`[data-date-for="${id}"]`).setAttribute("aria-expanded", "false");
-  pickerState.openId = null;
-  pickerState.draft = null;
-  if (restoreFocus) $(id).focus();
-}
-
-function openDatePicker(id) {
-  if (pickerState.openId === id) return;
-  closeDatePicker();
-  pickerState.openId = id;
-  pickerState.draft = new Date(readDate($(id)) || new Date());
-  pickerState.year = pickerState.draft.getFullYear();
-  pickerState.month = pickerState.draft.getMonth();
-  renderDatePicker();
-  $(`${id}-picker`).hidden = false;
-  positionDatePicker();
-  $(id).setAttribute("aria-expanded", "true");
-  document.querySelector(`[data-date-for="${id}"]`).setAttribute("aria-expanded", "true");
-  $(`${id}-picker`).querySelector(".date-picker__day.is-selected")?.focus();
-}
-
-window.addEventListener("resize", () => {
-  if (pickerState.openId) positionDatePicker();
-});
-
-for (const id of ["snapshot", "forecast"]) {
-  const input = $(id);
-  input.addEventListener("click", () => openDatePicker(id));
-  input.addEventListener("keydown", (event) => {
-    if (!["Enter", " ", "ArrowDown"].includes(event.key)) return;
-    event.preventDefault();
-    openDatePicker(id);
-  });
-  document.querySelector(`[data-date-for="${id}"]`).addEventListener("click", () => openDatePicker(id));
-}
-
-document.addEventListener("click", (event) => {
-  const dayButton = event.target.closest(".date-picker__day");
-  if (dayButton && pickerState.openId) {
-    syncPickerTime();
-    const { year, month, draft } = pickerState;
-    pickerState.draft = new Date(year, month, Number(dayButton.dataset.day), draft.getHours(), draft.getMinutes());
-    renderDatePicker();
-    $(`${pickerState.openId}-picker`).querySelector(".date-picker__day.is-selected")?.focus();
-    return;
-  }
-  const action = event.target.closest("[data-calendar-action]")?.dataset.calendarAction;
-  if (!action || !pickerState.openId) return;
-  if (action === "cancel") return closeDatePicker(true);
-  if (action === "apply") {
-    syncPickerTime();
-    const id = pickerState.openId;
-    setDateValue(id, pickerState.draft);
-    closeDatePicker(true);
-    render();
-    saveState();
-    return;
-  }
-  if (action === "now") {
-    pickerState.draft = new Date();
-    pickerState.draft.setSeconds(0, 0);
-    pickerState.year = pickerState.draft.getFullYear();
-    pickerState.month = pickerState.draft.getMonth();
-  } else {
-    syncPickerTime();
-    const view = new Date(pickerState.year, pickerState.month + (action === "next" ? 1 : -1), 1);
-    pickerState.year = view.getFullYear();
-    pickerState.month = view.getMonth();
-  }
-  renderDatePicker();
-});
-
-document.addEventListener("input", (event) => {
-  if (event.target.matches('.date-picker [data-time-unit]')) syncPickerTime();
-});
-document.addEventListener("pointerdown", (event) => {
-  if (pickerState.openId && !event.target.closest(".date-control")) closeDatePicker();
-});
-document.addEventListener("keydown", (event) => {
-  if (!pickerState.openId) return;
-  if (event.key === "Escape") {
-    event.preventDefault();
-    closeDatePicker(true);
-    return;
-  }
-  const day = event.target.closest(".date-picker__day");
-  const delta = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[event.key];
-  if (!day || !delta) return;
-  event.preventDefault();
-  syncPickerTime();
-  const { year, month, draft } = pickerState;
-  pickerState.draft = new Date(year, month, Number(day.dataset.day) + delta, draft.getHours(), draft.getMinutes());
-  pickerState.year = pickerState.draft.getFullYear();
-  pickerState.month = pickerState.draft.getMonth();
-  renderDatePicker();
-  $(`${pickerState.openId}-picker`).querySelector(".date-picker__day.is-selected")?.focus();
-});
 
 $("accounts-grid").innerHTML = accounts.map(accountMarkup).join("");
 initNumberControls($("accounts-grid"));
@@ -454,8 +267,6 @@ const accountFields = ["current", "target", "rebirths", "minutes"];
 function saveState() {
   const state = {
     accountCount,
-    snapshot: $("snapshot").dataset.value,
-    forecast: $("forecast").dataset.value,
     accounts: Object.fromEntries(accounts.map(({ key }) => [key,
       Object.fromEntries(accountFields.map((field) => [field, $(`${key}-${field}`).value]))])),
   };
@@ -475,11 +286,6 @@ function restoreState() {
   }
   if (!state || typeof state !== "object") return;
   if ([1, 2, 3].includes(state.accountCount)) accountCount = state.accountCount;
-  for (const id of ["snapshot", "forecast"]) {
-    if (typeof state[id] !== "string") continue;
-    const date = new Date(state[id]);
-    if (Number.isFinite(date.getTime())) setDateValue(id, date);
-  }
   for (const { key } of accounts) {
     for (const field of accountFields) {
       const value = state.accounts?.[key]?.[field];
@@ -502,10 +308,6 @@ function setAccountCount(count, persist = true) {
 }
 
 document.querySelectorAll(".account-count").forEach((button) => button.addEventListener("click", () => setAccountCount(Number(button.dataset.count))));
-const now = new Date();
-now.setSeconds(0, 0);
-setDateValue("snapshot", now);
-setDateValue("forecast", new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1));
 restoreState();
 document.querySelectorAll("#accounts-grid input").forEach((input) => {
   const update = () => { render(); saveState(); };
