@@ -2,10 +2,11 @@ import { calculate, restoreSnapshot } from "./calc.mjs?v=20261002-5";
 
 const $ = (id) => document.getElementById(id);
 const accounts = [
-  { key: "main", name: "Main", className: "main", current: "8108", target: "9999", rebirths: "158" },
-  { key: "alt", name: "Account 1", className: "alt", current: "1882", target: "7777", rebirths: "117" },
-  { key: "alt2", name: "Account 2", className: "alt2", current: "", target: "", rebirths: "" },
+  { key: "main", name: "Account 1", className: "main", current: "8108", target: "9999", rebirths: "158" },
+  { key: "alt", name: "Account 2", className: "alt", current: "1882", target: "7777", rebirths: "117" },
+  { key: "alt2", name: "Account 3", className: "alt2", current: "", target: "", rebirths: "" },
 ];
+const accountNameLimit = 32;
 const numberFormat = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
 const percentFormat = new Intl.NumberFormat("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const timeFormat = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit" });
@@ -25,7 +26,17 @@ function accountMarkup(account) {
     <section class="account-card account-card--${className}" data-account="${key}" aria-labelledby="${key}-title">
       <div class="account-card__head">
         <span class="account-card__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg></span>
-        <h2 id="${key}-title">${name}</h2>
+        <div class="account-name">
+          <div class="account-name__display">
+            <h2 id="${key}-title">${name}</h2>
+            <button type="button" class="account-name__edit" aria-label="Rename ${name}" title="Rename account"><svg class="icon" aria-hidden="true"><use href="#icon-square-pen"></use></svg></button>
+          </div>
+          <form class="account-name__form" aria-label="Rename ${name}" hidden>
+            <input id="${key}-name" type="text" aria-label="Account name" maxlength="${accountNameLimit}" autocomplete="off" placeholder="${name}">
+            <button type="submit" class="account-name__action" aria-label="Save account name" title="Save name"><svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg></button>
+            <button type="button" class="account-name__action account-name__cancel" aria-label="Cancel name edit" title="Cancel"><svg class="icon" aria-hidden="true"><use href="#icon-x"></use></svg></button>
+          </form>
+        </div>
         <div class="account-card__quick"><span>ETA</span><strong id="${key}-quick-eta">—</strong></div>
       </div>
       <div class="account-card__fields">
@@ -34,7 +45,8 @@ function accountMarkup(account) {
       </div>
       <fieldset class="pace-group" aria-label="Rebirth pace"><div class="pace-fields">
         <div class="field"><label for="${key}-rebirths">Rebirths</label><input id="${key}-rebirths" type="number" min="0" step="any" inputmode="decimal" value="${rebirths}"></div>
-        <div class="field"><label for="${key}-minutes">Every (minutes)</label><input id="${key}-minutes" type="number" min="0.01" step="any" inputmode="decimal" value="10"></div>
+        <span class="pace-fields__per" aria-hidden="true">per</span>
+        <div class="field"><label for="${key}-minutes">Minutes</label><input id="${key}-minutes" type="number" min="0.01" step="any" inputmode="decimal" value="10"></div>
       </div></fieldset>
       <div class="account-card__results" aria-live="polite">
         <div class="progress-line"><span>Estimated progress</span><strong id="${key}-progress-text">—</strong></div>
@@ -414,6 +426,58 @@ document.addEventListener("keydown", (event) => {
 
 $("accounts-grid").innerHTML = accounts.map(accountMarkup).join("");
 initNumberControls($("accounts-grid"));
+function setAccountName(account, value) {
+  const defaultName = `Account ${accounts.indexOf(account) + 1}`;
+  account.name = (typeof value === "string" ? value.trim().replace(/\s+/g, " ").slice(0, accountNameLimit) : "") || defaultName;
+  const card = document.querySelector(`[data-account="${account.key}"]`);
+  const heading = $(`${account.key}-title`);
+  heading.textContent = account.name;
+  heading.title = account.name;
+  card.querySelector(".account-name__edit").setAttribute("aria-label", `Rename ${account.name}`);
+  card.querySelector(".account-name__form").setAttribute("aria-label", `Rename ${account.name}`);
+  card.querySelector(".progress-track").setAttribute("aria-label", `${account.name} progress`);
+  $(`${account.key}-name`).value = account.name;
+}
+
+function closeAccountNameEditor(account, save = false, restoreFocus = true) {
+  const card = document.querySelector(`[data-account="${account.key}"]`);
+  const form = card.querySelector(".account-name__form");
+  if (form.hidden) return;
+  if (save) {
+    setAccountName(account, $(`${account.key}-name`).value);
+    saveState();
+  } else {
+    $(`${account.key}-name`).value = account.name;
+  }
+  form.hidden = true;
+  card.querySelector(".account-name__display").hidden = false;
+  if (restoreFocus) card.querySelector(".account-name__edit").focus();
+}
+
+for (const account of accounts) {
+  const card = document.querySelector(`[data-account="${account.key}"]`);
+  const form = card.querySelector(".account-name__form");
+  card.querySelector(".account-name__edit").addEventListener("click", () => {
+    for (const other of accounts) closeAccountNameEditor(other, false, false);
+    card.querySelector(".account-name__display").hidden = true;
+    form.hidden = false;
+    const input = $(`${account.key}-name`);
+    input.value = account.name;
+    input.focus();
+    input.select();
+  });
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    closeAccountNameEditor(account, true);
+  });
+  card.querySelector(".account-name__cancel").addEventListener("click", () => closeAccountNameEditor(account));
+  form.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    event.preventDefault();
+    closeAccountNameEditor(account);
+  });
+}
+
 document.querySelectorAll(".progress-track").forEach((track) => {
   const key = track.closest("[data-account]").dataset.account;
   const inspectPointer = (event) => {
@@ -453,8 +517,8 @@ function saveState() {
   const state = {
     accountCount,
     snapshot: $("snapshot").dataset.value,
-    accounts: Object.fromEntries(accounts.map(({ key }) => [key,
-      Object.fromEntries(accountFields.map((field) => [field, $(`${key}-${field}`).value]))])),
+    accounts: Object.fromEntries(accounts.map(({ key, name }) => [key,
+      { name, ...Object.fromEntries(accountFields.map((field) => [field, $(`${key}-${field}`).value])) }])),
   };
   try {
     localStorage.setItem(storageKey, JSON.stringify(state));
@@ -473,7 +537,9 @@ function restoreState() {
   if (!state || typeof state !== "object") return;
   if ([1, 2, 3].includes(state.accountCount)) accountCount = state.accountCount;
   setDateValue("snapshot", restoreSnapshot(state.snapshot, readDate($("snapshot"))));
-  for (const { key } of accounts) {
+  for (const account of accounts) {
+    const { key } = account;
+    setAccountName(account, state.accounts?.[key]?.name);
     for (const field of accountFields) {
       const value = state.accounts?.[key]?.[field];
       if (typeof value === "string" && value.length <= 100) $(`${key}-${field}`).value = value;
@@ -483,6 +549,7 @@ function restoreState() {
 
 function setAccountCount(count, persist = true) {
   accountCount = count;
+  accounts.slice(count).forEach((account) => closeAccountNameEditor(account, false, false));
   document.body.dataset.accountCount = String(accountCount);
   $("accounts-grid").dataset.count = String(accountCount);
   document.querySelectorAll(".account-count").forEach((item) => {
@@ -499,7 +566,7 @@ setDateValue("snapshot", new Date());
 restoreState();
 // Persist the initial timestamp once, including migration from older saved inputs.
 saveState();
-document.querySelectorAll("#accounts-grid input").forEach((input) => {
+document.querySelectorAll('#accounts-grid input[type="number"]').forEach((input) => {
   const update = () => { render(); saveState(); };
   input.addEventListener("input", update);
   input.addEventListener("change", update);

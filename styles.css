@@ -114,13 +114,22 @@ h1,h2,h3,p{margin:0}
 .account-card__head{display:flex;align-items:center;gap:8px;min-height:36px;margin-bottom:17px}
 .account-card__icon{display:inline-flex;align-items:center;justify-content:center;flex:none;width:20px;height:20px;color:var(--accent)}
 .account-card__icon svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.account-card__head h2{color:#f8fafc;font-size:18px;font-weight:700;letter-spacing:-.02em;line-height:24px}
+.account-card__head h2{overflow:hidden;color:#f8fafc;font-size:18px;font-weight:700;letter-spacing:-.02em;line-height:24px;text-overflow:ellipsis;white-space:nowrap}
+.account-name{flex:1;min-width:0}
+.account-name__display{display:flex;align-items:center;gap:6px;min-width:0}
+.account-name__edit,.account-name__action{display:grid;place-items:center;flex:none;width:32px;height:36px;padding:0;border:0;border-radius:6px;background:transparent;color:#91a0b5;cursor:pointer;transition:color .15s,background .15s}
+.account-name__edit:hover,.account-name__action:hover{background:#222b40;color:var(--accent)}
+.account-name__edit .icon{width:16px;height:16px}
+.account-name__form{display:flex;align-items:center;gap:4px;width:min(100%,340px)}
+.account-name__form input{width:100%;min-width:0;height:36px;padding:0 10px;border:1px solid #303a55;border-radius:7px;background:#0e1324;color:#f1f5f9;font-size:16px;outline:none}
+.account-name__form input:focus{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 12%,transparent)}
 .account-card__quick{margin-left:auto;text-align:right}
 .account-card__quick span{display:block;color:#8d9bb0;font-size:11px;font-weight:700;letter-spacing:.06em}
 .account-card__quick strong{display:block;margin-top:2px;color:var(--accent);font-size:17px;font-weight:800;font-variant-numeric:tabular-nums}
 .account-card__fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
 .pace-group{min-width:0;margin:17px 0 0;padding:0;border:0}
-.pace-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.pace-fields{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:11px}
+.pace-fields__per{display:grid;place-items:center;align-self:end;height:42px;color:#94a3b8;font-size:12px}
 .account-card__results{margin-top:17px;padding-top:15px;border-top:1px solid #293149}
 .progress-line{display:flex;justify-content:space-between;gap:8px;margin-bottom:4px;color:#94a3b8;font-size:12px;font-weight:600}
 .progress-line strong{color:var(--accent);font-variant-numeric:tabular-nums}
