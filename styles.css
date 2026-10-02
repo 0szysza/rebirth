@@ -188,7 +188,7 @@ body[data-calculator-mode=interval] .eta-block strong{overflow-wrap:anywhere}
 .selector-controls{display:flex;flex:none;flex-wrap:wrap;align-items:flex-end;gap:14px;margin-left:auto}
 .time-controls{display:flex;align-items:flex-end;flex-wrap:wrap;gap:14px;max-width:100%}
 .selector-controls>.account-mode-field{margin-left:auto}
-.snapshot-row{position:relative;z-index:6;display:flex;flex-direction:column;align-items:flex-start;gap:7px;margin:0}
+.snapshot-row{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:7px;margin:0}
 .snapshot-label{position:relative;display:flex;align-items:center;gap:7px;color:#94a3b8;font-size:12px;font-weight:600;line-height:15px}
 .snapshot-label>.icon{width:16px;height:16px;color:#5CDDFA}
 .snapshot-row>.date-control{width:270px}
