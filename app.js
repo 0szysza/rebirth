@@ -3,8 +3,8 @@ import { calculate } from "./calc.mjs?v=20261002-2";
 const $ = (id) => document.getElementById(id);
 const accounts = [
   { key: "main", name: "Main", className: "main", current: "8108", target: "9999", rebirths: "158" },
-  { key: "alt", name: "Alt 1", className: "alt", current: "1882", target: "7777", rebirths: "117" },
-  { key: "alt2", name: "Alt 2", className: "alt2", current: "", target: "", rebirths: "" },
+  { key: "alt", name: "Account 1", className: "alt", current: "1882", target: "7777", rebirths: "117" },
+  { key: "alt2", name: "Account 2", className: "alt2", current: "", target: "", rebirths: "" },
 ];
 const numberFormat = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
 const percentFormat = new Intl.NumberFormat("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -22,7 +22,7 @@ function accountMarkup(account) {
     <section class="account-card account-card--${className}" data-account="${key}" aria-labelledby="${key}-title">
       <div class="account-card__head">
         <span class="account-card__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg></span>
-        <h3 id="${key}-title">${name}</h3>
+        <h2 id="${key}-title">${name}</h2>
         <div class="account-card__quick"><span>ETA</span><strong id="${key}-quick-eta">—</strong></div>
       </div>
       <div class="account-card__fields">

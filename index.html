@@ -10,20 +10,20 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261002-3">
-  <script type="module" src="app.js?v=20261002-3"></script>
+  <link rel="stylesheet" href="styles.css?v=20261002-4">
+  <script type="module" src="app.js?v=20261002-4"></script>
 </head>
 <body>
   <svg class="icon-library" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
-    <symbol id="icon-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol>
+    <symbol id="icon-arrow-left" viewBox="0 0 24 24"><path d="M19 12H5m7 7-7-7 7-7"/></symbol>
     <symbol id="icon-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
     <symbol id="icon-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></symbol>
-    <symbol id="icon-trend" viewBox="0 0 24 24"><path d="m3 17 6-6 4 4 8-8"/><path d="M15 7h6v6"/></symbol>
     <symbol id="icon-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
   </svg>
 
   <header class="site-header">
     <div class="site-header__inner">
+      <a class="home-link" href="https://0szysza.github.io/" aria-label="Back to home" title="Back to home"><svg class="icon" aria-hidden="true"><use href="#icon-arrow-left"></use></svg></a>
       <a class="brand" href="./" aria-label="BGSI Rebirth Calculator home">
         <span class="brand__logo" aria-hidden="true">
           <img src="favicon.svg" width="39" height="39" alt="">
@@ -32,7 +32,7 @@
       </a>
       <nav class="tool-switcher" aria-label="Switch tool">
         <details class="tool-menu">
-          <summary><svg class="icon" aria-hidden="true"><use href="#icon-globe"></use></svg><span>Tools</span><svg class="icon tool-menu__chevron" aria-hidden="true"><use href="#icon-chevron"></use></svg></summary>
+          <summary aria-label="Tools"><svg class="icon" aria-hidden="true"><use href="#icon-globe"></use></svg><span>Tools</span><svg class="icon tool-menu__chevron" aria-hidden="true"><use href="#icon-chevron"></use></svg></summary>
           <div class="tool-menu__list">
             <a href="https://0szysza.github.io/trackccu/"><img class="tool-menu__logo" src="https://0szysza.github.io/trackccu/favicon.png" width="18" height="18" alt=""><span><strong>TrackCCU</strong><small>Roblox CCU tracker</small></span></a>
             <a href="./" aria-current="page"><img class="tool-menu__logo" src="favicon.svg" width="18" height="18" alt=""><span><strong>BGSI Rebirth Calculator</strong><small>Current page</small></span></a>
@@ -43,13 +43,8 @@
   </header>
 
   <main class="page-shell">
-    <section class="page-intro">
-      <h1>BGSI Rebirth Calculator</h1>
-      <p>Set your rebirth counts and pace to see when each account reaches its goal.</p>
-    </section>
-
     <section class="account-selector" aria-labelledby="account-selector-title">
-      <div class="selector-heading"><svg class="icon" aria-hidden="true"><use href="#icon-users"></use></svg><h2 id="account-selector-title">Accounts</h2></div>
+      <div class="selector-heading"><svg class="icon" aria-hidden="true"><use href="#icon-users"></use></svg><h1 id="account-selector-title">Accounts</h1></div>
       <div class="account-selector__buttons" role="group" aria-label="Number of accounts">
         <button class="account-count" type="button" data-count="1" aria-pressed="false">1 Account</button>
         <button class="account-count is-active" type="button" data-count="2" aria-pressed="true">2 Accounts</button>
@@ -57,8 +52,7 @@
       </div>
     </section>
 
-    <div class="results-heading"><div><svg class="icon" aria-hidden="true"><use href="#icon-trend"></use></svg><h2>Account estimates</h2></div></div>
-    <div class="accounts-grid" id="accounts-grid" data-count="2"></div>
+    <div class="accounts-grid" id="accounts-grid" role="group" aria-label="Account estimates" data-count="2"></div>
   </main>
 
   <footer class="site-footer">
