@@ -30,11 +30,13 @@ function accountMarkup(account) {
           <div class="account-name__display">
             <h2 id="${key}-title">${name}</h2>
             <button type="button" class="account-name__edit" aria-label="Rename ${name}" title="Rename account"><svg class="icon" aria-hidden="true"><use href="#icon-square-pen"></use></svg></button>
+            <button type="button" class="account-name__action account-name__reset" aria-label="Reset account name" title="Reset name" hidden><svg class="icon" aria-hidden="true"><use href="#icon-pen-off"></use></svg></button>
           </div>
           <form class="account-name__form" aria-label="Rename ${name}" hidden>
             <input id="${key}-name" type="text" aria-label="Account name" maxlength="${accountNameLimit}" autocomplete="off" placeholder="${name}">
-            <button type="submit" class="account-name__action" aria-label="Save account name" title="Save name"><svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg></button>
+            <button type="submit" class="account-name__action account-name__save" aria-label="Save account name" title="Save name"><svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg></button>
             <button type="button" class="account-name__action account-name__cancel" aria-label="Cancel name edit" title="Cancel"><svg class="icon" aria-hidden="true"><use href="#icon-x"></use></svg></button>
+            <button type="button" class="account-name__action account-name__reset" aria-label="Reset account name" title="Reset name" hidden><svg class="icon" aria-hidden="true"><use href="#icon-pen-off"></use></svg></button>
           </form>
         </div>
         <div class="account-card__quick"><span>ETA</span><strong id="${key}-quick-eta">—</strong></div>
@@ -426,9 +428,23 @@ document.addEventListener("keydown", (event) => {
 
 $("accounts-grid").innerHTML = accounts.map(accountMarkup).join("");
 initNumberControls($("accounts-grid"));
+function defaultAccountName(account) {
+  return `Account ${accounts.indexOf(account) + 1}`;
+}
+
+function normalizeAccountName(account, value) {
+  return (typeof value === "string" ? value.trim().replace(/\s+/g, " ").slice(0, accountNameLimit) : "") || defaultAccountName(account);
+}
+
+function updateAccountNameReset(account) {
+  const card = document.querySelector(`[data-account="${account.key}"]`);
+  const defaultName = defaultAccountName(account);
+  card.querySelector(".account-name__display .account-name__reset").hidden = account.name === defaultName;
+  card.querySelector(".account-name__form .account-name__reset").hidden = normalizeAccountName(account, $(`${account.key}-name`).value) === defaultName;
+}
+
 function setAccountName(account, value) {
-  const defaultName = `Account ${accounts.indexOf(account) + 1}`;
-  account.name = (typeof value === "string" ? value.trim().replace(/\s+/g, " ").slice(0, accountNameLimit) : "") || defaultName;
+  account.name = normalizeAccountName(account, value);
   const card = document.querySelector(`[data-account="${account.key}"]`);
   const heading = $(`${account.key}-title`);
   heading.textContent = account.name;
@@ -437,6 +453,7 @@ function setAccountName(account, value) {
   card.querySelector(".account-name__form").setAttribute("aria-label", `Rename ${account.name}`);
   card.querySelector(".progress-track").setAttribute("aria-label", `${account.name} progress`);
   $(`${account.key}-name`).value = account.name;
+  updateAccountNameReset(account);
 }
 
 function closeAccountNameEditor(account, save = false, restoreFocus = true) {
@@ -451,6 +468,7 @@ function closeAccountNameEditor(account, save = false, restoreFocus = true) {
   }
   form.hidden = true;
   card.querySelector(".account-name__display").hidden = false;
+  updateAccountNameReset(account);
   if (restoreFocus) card.querySelector(".account-name__edit").focus();
 }
 
@@ -463,6 +481,7 @@ for (const account of accounts) {
     form.hidden = false;
     const input = $(`${account.key}-name`);
     input.value = account.name;
+    updateAccountNameReset(account);
     input.focus();
     input.select();
   });
@@ -471,6 +490,13 @@ for (const account of accounts) {
     closeAccountNameEditor(account, true);
   });
   card.querySelector(".account-name__cancel").addEventListener("click", () => closeAccountNameEditor(account));
+  $(`${account.key}-name`).addEventListener("input", () => updateAccountNameReset(account));
+  card.querySelectorAll(".account-name__reset").forEach((button) => button.addEventListener("click", () => {
+    setAccountName(account, defaultAccountName(account));
+    saveState();
+    closeAccountNameEditor(account, false, false);
+    card.querySelector(".account-name__edit").focus();
+  }));
   form.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") return;
     event.preventDefault();
