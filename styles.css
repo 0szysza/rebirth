@@ -33,6 +33,7 @@ h1,h2,h3,p{margin:0}
 .tool-menu__list a{display:flex;align-items:center;gap:10px;padding:10px;border-radius:7px;color:#b3bfd0;transition:background .15s,color .15s}
 .tool-menu__list a:hover,.tool-menu__list a[aria-current=page]{background:#222b40;color:#f8fafc}
 .tool-menu__list a .icon{width:18px;height:18px;color:#5CDDFA}
+.tool-menu__logo{display:block;width:18px;height:18px;flex:none;object-fit:contain}
 .tool-menu__list a span{display:flex;flex-direction:column;gap:2px}
 .tool-menu__list a strong{font-size:13px;font-weight:700}
 .tool-menu__list a small{color:#8a98ac;font-size:11px}

@@ -249,7 +249,7 @@ document.querySelectorAll("input").forEach((input) => {
   input.addEventListener("change", render);
 });
 const toolMenu = document.querySelector(".tool-menu");
-document.addEventListener("click", (event) => {
+document.addEventListener("pointerdown", (event) => {
   if (!toolMenu.contains(event.target)) toolMenu.open = false;
 });
 toolMenu.addEventListener("keydown", (event) => {
