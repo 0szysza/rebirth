@@ -117,13 +117,14 @@ h1,h2,h3,p{margin:0}
 .account-card__head h2{overflow:hidden;color:#f8fafc;font-size:18px;font-weight:700;letter-spacing:-.02em;line-height:24px;text-overflow:ellipsis;white-space:nowrap}
 .account-name{flex:1;min-width:0}
 .account-name__display{display:flex;align-items:center;gap:6px;min-width:0}
-.account-name__edit,.account-name__action{display:grid;place-items:center;flex:none;width:32px;height:36px;padding:0;border:0;border-radius:6px;background:transparent;color:#91a0b5;cursor:pointer;transition:color .15s,background .15s}
+.account-name__edit,.account-name__action{display:grid;place-items:center;flex:0 0 36px;width:36px;min-width:36px;height:36px;padding:0;border:0;border-radius:6px;background:transparent;color:#91a0b5;cursor:pointer;transition:color .15s,background .15s}
 .account-name__edit:hover,.account-name__action:hover{background:#222b40;color:var(--accent)}
 .account-name__save,.account-name__save:hover{color:#34d399}
 .account-name__cancel,.account-name__cancel:hover{color:#fb7185}
+.account-name__reset,.account-name__reset:hover{color:var(--accent)}
 .account-name__edit .icon{width:16px;height:16px}
 .account-name__form{display:flex;align-items:center;gap:4px;width:min(100%,340px)}
-.account-name__form input{width:100%;min-width:0;height:36px;padding:0 10px;border:1px solid #303a55;border-radius:7px;background:#0e1324;color:#f1f5f9;font-size:16px;outline:none}
+.account-name__form input{flex:1 1 0;width:0;min-width:0;height:36px;padding:0 10px;border:1px solid #303a55;border-radius:7px;background:#0e1324;color:#f1f5f9;font-size:16px;outline:none}
 .account-name__form input:focus{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 12%,transparent)}
 .account-card__quick{margin-left:auto;text-align:right}
 .account-card__quick span{display:block;color:#8d9bb0;font-size:11px;font-weight:700;letter-spacing:.06em}

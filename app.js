@@ -32,7 +32,6 @@ function accountMarkup(account) {
           <div class="account-name__display">
             <h2 id="${key}-title">${name}</h2>
             <button type="button" class="account-name__edit" aria-label="Rename ${name}" title="Rename account"><svg class="icon" aria-hidden="true"><use href="#icon-square-pen"></use></svg></button>
-            <button type="button" class="account-name__action account-name__reset" aria-label="Reset account name" title="Reset name" hidden><svg class="icon" aria-hidden="true"><use href="#icon-pen-off"></use></svg></button>
           </div>
           <form class="account-name__form" aria-label="Rename ${name}" hidden>
             <input id="${key}-name" type="text" aria-label="Account name" maxlength="${accountNameLimit}" autocomplete="off" placeholder="${name}">
@@ -526,7 +525,6 @@ function normalizeAccountName(account, value) {
 function updateAccountNameReset(account) {
   const card = document.querySelector(`[data-account="${account.key}"]`);
   const defaultName = defaultAccountName(account);
-  card.querySelector(".account-name__display .account-name__reset").hidden = account.name === defaultName;
   card.querySelector(".account-name__form .account-name__reset").hidden = normalizeAccountName(account, $(`${account.key}-name`).value) === defaultName;
 }
 
