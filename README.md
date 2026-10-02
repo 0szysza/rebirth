@@ -8,6 +8,4 @@ The initial Account 1 and Account 2 values are editable examples. Account 3 star
 
 Hover, tap, or focus a progress bar and use the arrow keys to inspect a point. The tooltip shows its rebirth count, progress to 0.1%, estimated time to reach that point, and the goal's finish time. All modes use full-width account cards stacked vertically, with inputs and results side by side on desktop.
 
-Drag across a progress bar in either direction to select a range. Two handles adjust its endpoints; the preview shows their percentages, counts, estimated dates and times, rebirths gained and duration. The Range button initially selects the remaining progress (or the final 10% when the target is already reached). Use arrow keys on a handle for 0.1% adjustments, Shift for 1%, and Escape or the clear button to remove the selection. Each account has its own selection. Range selections last for the current visit and never change the saved counts or recorded timestamp. Earlier points are approximate historical estimates at the entered pace.
-
 Published with GitHub Pages at <https://0szysza.github.io/rebirth/>.
