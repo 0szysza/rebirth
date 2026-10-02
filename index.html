@@ -62,8 +62,22 @@
     <section class="schedule-panel" aria-labelledby="schedule-title">
       <div class="panel-heading"><svg class="icon" aria-hidden="true"><use href="#icon-clock"></use></svg><h2 id="schedule-title">Time settings</h2></div>
       <div class="schedule-grid">
-        <div class="field"><label for="snapshot">Current snapshot</label><input id="snapshot" type="datetime-local" required></div>
-        <div class="field"><label for="forecast">Forecast at</label><input id="forecast" type="datetime-local" required></div>
+        <div class="field date-field">
+          <div class="field__label"><label for="snapshot">Current snapshot</label><button class="help-tip" type="button" aria-label="What is the current snapshot?" aria-describedby="snapshot-help">?<span class="help-tip__bubble" id="snapshot-help" role="tooltip">The date and time when your current rebirth counts were measured. The calculation starts here.</span></button></div>
+          <div class="date-control">
+            <input id="snapshot" type="text" readonly required aria-haspopup="dialog" aria-controls="snapshot-picker" aria-expanded="false" autocomplete="off">
+            <button class="date-control__open" type="button" data-date-for="snapshot" aria-label="Choose current snapshot date and time" aria-haspopup="dialog" aria-controls="snapshot-picker" aria-expanded="false"><svg class="icon" aria-hidden="true"><use href="#icon-calendar"></use></svg></button>
+            <div class="date-picker" id="snapshot-picker" role="dialog" aria-label="Current snapshot date and time" hidden></div>
+          </div>
+        </div>
+        <div class="field date-field">
+          <div class="field__label"><label for="forecast">Forecast at</label><button class="help-tip" type="button" aria-label="What is Forecast at?" aria-describedby="forecast-help">?<span class="help-tip__bubble" id="forecast-help" role="tooltip">A future checkpoint. It estimates your rebirth count at this time, even if you reach the target earlier. ETA shows when the target is reached.</span></button></div>
+          <div class="date-control">
+            <input id="forecast" type="text" readonly required aria-haspopup="dialog" aria-controls="forecast-picker" aria-expanded="false" autocomplete="off">
+            <button class="date-control__open" type="button" data-date-for="forecast" aria-label="Choose forecast date and time" aria-haspopup="dialog" aria-controls="forecast-picker" aria-expanded="false"><svg class="icon" aria-hidden="true"><use href="#icon-calendar"></use></svg></button>
+            <div class="date-picker" id="forecast-picker" role="dialog" aria-label="Forecast date and time" hidden></div>
+          </div>
+        </div>
       </div>
     </section>
 
