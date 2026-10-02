@@ -67,6 +67,42 @@ h1,h2,h3,p{margin:0}
 .number-control__step:hover,.number-control__step:focus-visible{background:#263653;color:#5CDDFA}
 .number-control__step svg{width:10px;height:7px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 
+.date-control{position:relative}
+.date-control>input{padding-right:43px;cursor:pointer}
+.date-control__open{position:absolute;top:50%;right:8px;display:grid;place-items:center;width:28px;height:28px;padding:0;border:0;border-radius:6px;background:transparent;color:#91a0b5;transform:translateY(-50%);cursor:pointer}
+.date-control__open:hover,.date-control__open:focus-visible,.date-control__open[aria-expanded=true]{background:#263653;color:#5CDDFA}
+.date-picker{position:absolute;top:calc(100% + 8px);left:0;z-index:40;width:min(320px,calc(100vw - 32px));padding:13px;border:1px solid #40506f;border-radius:11px;background:#171f32;box-shadow:0 18px 36px rgba(0,0,0,.42)}
+.date-picker.is-above{top:auto;bottom:calc(100% + 8px)}
+.date-picker.is-floating,.date-field:last-child .date-picker.is-floating{position:fixed;top:50%;left:50%;right:auto;bottom:auto;max-height:calc(100vh - 24px);max-height:calc(100svh - 24px);overflow-y:auto;transform:translate(-50%,-50%)}
+.date-picker__header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:11px}
+.date-picker__header strong{font-size:14px;font-weight:800;color:#f8fafc}
+.date-picker__nav{display:grid;place-items:center;width:28px;height:28px;padding:0;border:1px solid #34415b;border-radius:6px;background:#222d44;color:#a9bbd4;cursor:pointer}
+.date-picker__nav:hover{border-color:#5CDDFA;color:#5CDDFA}
+.date-picker__nav svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.date-picker__weekdays,.date-picker__days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;text-align:center}
+.date-picker__weekdays{margin-bottom:4px;color:#8c9bb3;font-size:10px;font-weight:700}
+.date-picker__weekdays span{padding:5px 0}
+.date-picker__empty,.date-picker__day{min-width:0;height:33px}
+.date-picker__day{padding:0;border:1px solid transparent;border-radius:6px;background:transparent;color:#d6e0ee;font-size:12px;font-weight:600;cursor:pointer}
+.date-picker__day:hover{background:#2b3955;color:#fff}
+.date-picker__day.is-today:not(.is-selected){border-color:#546480;color:#5CDDFA}
+.date-picker__day.is-selected{border-color:#5CDDFA;background:#24475b;color:#91efff}
+.date-picker__time{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:11px;padding-top:12px;border-top:1px solid #303a55}
+.date-picker__time-title{display:flex;align-items:center;gap:6px;color:#a8b5c9;font-size:12px;font-weight:700}
+.date-picker__time-title .icon{width:15px;height:15px;color:#5CDDFA}
+.date-picker__time-fields{display:grid;grid-template-columns:58px auto 58px;align-items:end;gap:5px}
+.date-picker__time-fields .field label{margin-bottom:4px;font-size:10px;text-align:center}
+.date-picker__time-fields .field input{height:35px;padding-left:8px;font-size:12px}
+.date-picker__time-fields .number-control input{padding-right:25px}
+.date-picker__time-fields .number-control__steps{right:3px;width:19px;padding-left:2px}
+.date-picker__time-colon{padding-bottom:9px;color:#91a0b5;font-weight:800}
+.date-picker__footer{display:flex;align-items:center;gap:7px;margin-top:13px;padding-top:11px;border-top:1px solid #303a55}
+.date-picker__footer span{flex:1}
+.date-picker__footer button{min-height:30px;padding:0 9px;border:1px solid #34415b;border-radius:6px;background:#222d44;color:#cbd5e1;font-size:11px;font-weight:700;cursor:pointer}
+.date-picker__footer button:hover{border-color:#5CDDFA;color:#fff}
+.date-picker__footer .date-picker__apply{border-color:#5CDDFA;background:#24475b;color:#91efff}
+
+
 .accounts-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;align-items:start}
 .account-card{--accent:#5CDDFA;position:relative;min-width:0;padding:19px;border:1px solid #262d4a;border-radius:14px;background:#15192d}
 .account-card:hover,.account-card:focus-within{z-index:2}
@@ -127,3 +163,22 @@ h1,h2,h3,p{margin:0}
 @media(max-width:350px){.site-header__inner{gap:6px}.brand__logo,.brand__logo img{width:34px;height:34px}.brand__copy strong{font-size:16px;line-height:22.4px}.brand__copy small{font-size:10px;line-height:15px}.tool-menu summary{padding:0 7px}.tool-menu summary>span{display:none}}
 @media(max-width:430px){.account-card{padding:16px}.field input{font-size:13px}.tool-menu summary{padding:0 9px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
+
+.snapshot-row{position:relative;z-index:6;display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.snapshot-label{position:relative;display:flex;align-items:center;gap:7px;color:#94a3b8;font-size:12px;font-weight:600}
+.snapshot-label>.icon{width:16px;height:16px;color:#5CDDFA}
+.snapshot-row>.date-control{width:270px}
+.snapshot-row input{height:38px;font-size:13px}
+.help-tip{display:inline-grid;place-items:center;flex:none;width:16px;height:16px;padding:0;border:1px solid #53617a;border-radius:50%;background:transparent;color:#9baabe;font-size:10px;font-weight:700;cursor:help}
+.help-tip__bubble{position:absolute;top:calc(100% + 8px);left:0;z-index:50;display:none;width:285px;padding:10px 12px;border:1px solid #3d4b66;border-radius:8px;background:#202a40;box-shadow:0 10px 24px #0005;color:#cbd5e1;font-size:12px;font-weight:400;line-height:1.5;text-align:left}
+.help-tip:hover .help-tip__bubble,.help-tip:focus .help-tip__bubble{display:block}
+.date-picker__nav{width:34px;height:34px}
+.date-picker__day{height:36px}
+.date-picker__time-fields{grid-template-columns:78px auto 78px}
+.date-picker__time-fields .field input{height:42px;font-size:16px;padding-right:29px}
+.date-picker__time-fields .number-control__steps{right:5px;width:21px;height:32px}
+.date-picker__footer button{min-height:38px;padding:0 12px;font-size:12px}
+.date-picker__footer button:disabled{opacity:.4;cursor:default}
+.stat--wide{grid-column:1/-1}
+.stat--wide strong{color:var(--accent)}
+@media(max-width:680px){.snapshot-row{flex-direction:column;align-items:stretch;gap:8px}.snapshot-row>.date-control{width:100%}.snapshot-row input{height:42px;font-size:16px}}

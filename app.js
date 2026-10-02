@@ -1,4 +1,4 @@
-import { calculate } from "./calc.mjs?v=20261002-2";
+import { calculate, restoreSnapshot } from "./calc.mjs?v=20261002-5";
 
 const $ = (id) => document.getElementById(id);
 const accounts = [
@@ -11,6 +11,9 @@ const percentFormat = new Intl.NumberFormat("en-US", { minimumFractionDigits: 1,
 const timeFormat = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit" });
 const dateFormat = new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 const shortDateFormat = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" });
+const dateInputFormat = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+const calendarMonthFormat = new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric" });
+const calendarDayFormat = new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 const accountCalculations = new Map();
 const previewPositions = new Map();
 let accountCount = 2;
@@ -26,7 +29,7 @@ function accountMarkup(account) {
         <div class="account-card__quick"><span>ETA</span><strong id="${key}-quick-eta">—</strong></div>
       </div>
       <div class="account-card__fields">
-        <div class="field"><label for="${key}-current">Current rebirths</label><input id="${key}-current" type="number" min="0" step="1" inputmode="numeric" value="${current}"></div>
+        <div class="field"><label for="${key}-current">Rebirths at recorded time</label><input id="${key}-current" type="number" min="0" step="1" inputmode="numeric" value="${current}"></div>
         <div class="field"><label for="${key}-target">Target rebirths</label><input id="${key}-target" type="number" min="0" step="1" inputmode="numeric" value="${target}"></div>
       </div>
       <fieldset class="pace-group" aria-label="Rebirth pace"><div class="pace-fields">
@@ -35,7 +38,7 @@ function accountMarkup(account) {
         <div class="field"><label for="${key}-minutes">Minutes</label><input id="${key}-minutes" type="number" min="0.01" step="any" inputmode="decimal" value="10"></div>
       </div></fieldset>
       <div class="account-card__results" aria-live="polite">
-        <div class="progress-line"><span>Progress to target</span><strong id="${key}-progress-text">—</strong></div>
+        <div class="progress-line"><span>Estimated progress</span><strong id="${key}-progress-text">—</strong></div>
         <div class="progress-inspector">
           <div class="progress-track" role="progressbar" tabindex="0" aria-label="${name} progress" aria-description="Hover, tap, or use arrow keys to inspect a point" aria-describedby="${key}-progress-tooltip" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="${key}-progress-bar"></span></div>
           <span class="progress-hover-marker" id="${key}-progress-marker" hidden aria-hidden="true"></span>
@@ -45,16 +48,26 @@ function accountMarkup(account) {
             <div class="progress-tooltip__row"><span>Estimated finish</span><strong id="${key}-hover-finish">—</strong></div>
           </div>
         </div>
-        <div class="eta-block"><span>Estimated finish</span><strong id="${key}-eta">—</strong><small id="${key}-eta-date">—</small></div>
+        <div class="eta-block"><span id="${key}-eta-label">Estimated finish</span><strong id="${key}-eta">—</strong><small id="${key}-eta-date">—</small></div>
         <div class="stat-grid">
           <div class="stat"><span>Remaining</span><strong id="${key}-remaining">—</strong></div>
-          <div class="stat"><span>Time needed</span><strong id="${key}-duration">—</strong></div>
+          <div class="stat"><span>Time left</span><strong id="${key}-duration">—</strong></div>
+          <div class="stat stat--wide"><span>Estimated now</span><strong id="${key}-projected">—</strong></div>
         </div>
         <p class="account-message" id="${key}-message"></p>
       </div>
     </section>`;
 }
 
+function setDateValue(id, date) {
+  date = restoreSnapshot(date.toISOString());
+  $(id).dataset.value = date.toISOString();
+  $(id).value = dateInputFormat.format(date);
+}
+function readDate(input) {
+  const date = new Date(input.dataset.value);
+  return Number.isFinite(date.getTime()) ? date : null;
+}
 function readNumber(input) {
   return input.value.trim() === "" ? NaN : Number(input.value);
 }
@@ -99,8 +112,7 @@ function showProgressTooltip(key, rawPercent) {
       : Number.isFinite(timestamp) && Math.abs(timestamp) <= 8640000000000000
         ? `${count < data.current ? "≈ " : ""}${formatDateTime(new Date(timestamp))}` : "Out of range";
   }
-  const goalTime = data.result.remaining === 0 ? "Goal reached"
-    : data.result.eta ? formatDateTime(data.result.eta)
+  const goalTime = data.result.eta ? formatDateTime(data.result.eta)
       : data.pace.rebirths === 0 ? "No pace" : "Out of range";
   $(`${key}-hover-percent`).textContent = `${percentFormat.format(percent)}%`;
   $(`${key}-hover-count`).textContent = `${numberFormat.format(count)} rebirths`;
@@ -122,7 +134,8 @@ function showProgressTooltip(key, rawPercent) {
 function clearResult(key, message, neutral = false) {
   accountCalculations.delete(key);
   hideProgressTooltip(key);
-  for (const id of ["progress-text", "eta", "eta-date", "remaining", "duration"]) $(`${key}-${id}`).textContent = "—";
+  for (const id of ["progress-text", "eta", "eta-date", "remaining", "duration", "projected"]) $(`${key}-${id}`).textContent = "—";
+  $(`${key}-eta-label`).textContent = "Estimated finish";
   $(`${key}-quick-eta`).textContent = "—";
   $(`${key}-progress-bar`).style.width = "0%";
   $(`${key}-progress-bar`).parentElement.setAttribute("aria-valuenow", "0");
@@ -154,15 +167,18 @@ function renderAccount(key, common) {
   $(`${key}-progress-text`).textContent = `${percentFormat.format(result.progress)}%`;
   $(`${key}-progress-bar`).style.width = `${result.progress}%`;
   $(`${key}-progress-bar`).parentElement.setAttribute("aria-valuenow", result.progress.toFixed(1));
-  $(`${key}-progress-bar`).parentElement.setAttribute("aria-valuetext", `${percentFormat.format(result.progress)}%, ${numberFormat.format(current)} of ${numberFormat.format(target)} rebirths`);
-  $(`${key}-remaining`).textContent = numberFormat.format(result.remaining);
+  $(`${key}-progress-bar`).parentElement.setAttribute("aria-valuetext", `Estimated ${percentFormat.format(result.progress)}%, ${numberFormat.format(Math.floor(result.projected))} of ${numberFormat.format(target)} rebirths`);
+  $(`${key}-remaining`).textContent = numberFormat.format(Math.ceil(result.remaining));
+  $(`${key}-projected`).textContent = `≈ ${numberFormat.format(Math.floor(result.projected))} rebirths`;
   $(`${key}-duration`).textContent = formatDuration(result.activeDuration);
   if (result.eta) {
     const displayedEta = new Date(Math.round(result.eta.getTime() / 60000) * 60000);
-    $(`${key}-eta`).textContent = result.remaining === 0 ? "Goal reached" : timeFormat.format(displayedEta);
+    $(`${key}-eta-label`).textContent = result.reached ? "Estimated target reached" : "Estimated finish";
+    $(`${key}-eta`).textContent = timeFormat.format(displayedEta);
     $(`${key}-eta-date`).textContent = dateFormat.format(displayedEta);
-    $(`${key}-quick-eta`).textContent = result.remaining === 0 ? "Done" : timeFormat.format(displayedEta);
+    $(`${key}-quick-eta`).textContent = result.reached ? "Done" : timeFormat.format(displayedEta);
   } else {
+    $(`${key}-eta-label`).textContent = "Estimated finish";
     $(`${key}-eta`).textContent = pace.rebirths === 0 ? "No pace" : "Out of range";
     $(`${key}-eta-date`).textContent = "—";
     $(`${key}-quick-eta`).textContent = pace.rebirths === 0 ? "No pace" : "—";
@@ -173,7 +189,7 @@ function renderAccount(key, common) {
 }
 
 function render() {
-  const common = { snapshot: new Date() };
+  const common = { snapshot: readDate($("snapshot")), now: new Date() };
   for (const [index, account] of accounts.entries()) {
     const card = document.querySelector(`[data-account="${account.key}"]`);
     card.hidden = index >= accountCount;
@@ -227,6 +243,176 @@ document.addEventListener("click", (event) => {
 });
 
 
+const pickerState = { openId: null, draft: null, year: 0, month: 0 };
+const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+const twoDigits = (value) => String(value).padStart(2, "0");
+
+function syncPickerTime() {
+  if (!pickerState.openId || !pickerState.draft) return;
+  const picker = $(`${pickerState.openId}-picker`);
+  const hourInput = picker.querySelector('[data-time-unit="hour"]');
+  const minuteInput = picker.querySelector('[data-time-unit="minute"]');
+  if (!hourInput || !minuteInput) return;
+  const valid = hourInput.value !== "" && minuteInput.value !== "" && hourInput.validity.valid && minuteInput.validity.valid;
+  picker.querySelector(".date-picker__apply").disabled = !valid;
+  if (!valid) return false;
+  const hours = Number(hourInput.value);
+  const minutes = Number(minuteInput.value);
+  pickerState.draft.setHours(Number.isFinite(hours) && hourInput.value !== "" ? Math.min(23, Math.max(0, Math.trunc(hours))) : pickerState.draft.getHours());
+  pickerState.draft.setMinutes(Number.isFinite(minutes) && minuteInput.value !== "" ? Math.min(59, Math.max(0, Math.trunc(minutes))) : pickerState.draft.getMinutes(), 0, 0);
+  return true;
+}
+
+function renderDatePicker() {
+  const { openId, draft, year, month } = pickerState;
+  if (!openId) return;
+  const picker = $(`${openId}-picker`);
+  const offset = (new Date(year, month, 1).getDay() + 6) % 7;
+  const days = new Date(year, month + 1, 0).getDate();
+  const today = new Date();
+  const cells = Array.from({ length: offset }, () => '<span class="date-picker__empty" aria-hidden="true"></span>');
+  for (let day = 1; day <= days; day += 1) {
+    const date = new Date(year, month, day);
+    const selected = sameDay(date, draft);
+    const isToday = sameDay(date, today);
+    cells.push(`<button type="button" class="date-picker__day${selected ? " is-selected" : ""}${isToday ? " is-today" : ""}" data-day="${day}" aria-label="${calendarDayFormat.format(date)}" aria-pressed="${selected}">${day}</button>`);
+  }
+  picker.innerHTML = `
+    <div class="date-picker__header">
+      <button type="button" class="date-picker__nav" data-calendar-action="previous" aria-label="Previous month"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+      <strong>${calendarMonthFormat.format(new Date(year, month, 1))}</strong>
+      <button type="button" class="date-picker__nav" data-calendar-action="next" aria-label="Next month"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+    </div>
+    <div class="date-picker__weekdays" aria-hidden="true"><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span></div>
+    <div class="date-picker__days" role="group" aria-label="Choose a day">${cells.join("")}</div>
+    <div class="date-picker__time">
+      <div class="date-picker__time-title"><svg class="icon" aria-hidden="true"><use href="#icon-clock"></use></svg><span>Time</span></div>
+      <div class="date-picker__time-fields">
+        <div class="field"><label for="${openId}-hour">Hour</label><input id="${openId}-hour" type="number" min="0" max="23" step="1" value="${twoDigits(draft.getHours())}" data-time-unit="hour" data-step-label="hour" data-wrap="true" data-pad="2" inputmode="numeric"></div>
+        <span class="date-picker__time-colon" aria-hidden="true">:</span>
+        <div class="field"><label for="${openId}-minute">Minute</label><input id="${openId}-minute" type="number" min="0" max="59" step="1" value="${twoDigits(draft.getMinutes())}" data-time-unit="minute" data-step-label="minute" data-wrap="true" data-pad="2" inputmode="numeric"></div>
+      </div>
+    </div>
+    <div class="date-picker__footer"><button type="button" data-calendar-action="now">Now</button><span></span><button type="button" data-calendar-action="cancel">Cancel</button><button type="button" class="date-picker__apply" data-calendar-action="apply">Apply</button></div>`;
+  initNumberControls(picker);
+  if (!picker.hidden) positionDatePicker();
+}
+
+function positionDatePicker() {
+  const id = pickerState.openId;
+  if (!id) return;
+  const picker = $(`${id}-picker`);
+  picker.classList.remove("is-above", "is-floating");
+  const field = $(id).getBoundingClientRect();
+  const height = picker.getBoundingClientRect().height;
+  if (window.innerHeight - field.bottom >= height + 8) return;
+  picker.classList.add(field.top >= height + 8 ? "is-above" : "is-floating");
+}
+
+function closeDatePicker(restoreFocus = false) {
+  const id = pickerState.openId;
+  if (!id) return;
+  $(`${id}-picker`).hidden = true;
+  $(id).setAttribute("aria-expanded", "false");
+  document.querySelector(`[data-date-for="${id}"]`).setAttribute("aria-expanded", "false");
+  pickerState.openId = null;
+  pickerState.draft = null;
+  if (restoreFocus) $(id).focus();
+}
+
+function openDatePicker(id) {
+  if (pickerState.openId === id) return;
+  closeDatePicker();
+  pickerState.openId = id;
+  pickerState.draft = new Date(readDate($(id)) || new Date());
+  pickerState.year = pickerState.draft.getFullYear();
+  pickerState.month = pickerState.draft.getMonth();
+  renderDatePicker();
+  $(`${id}-picker`).hidden = false;
+  positionDatePicker();
+  $(id).setAttribute("aria-expanded", "true");
+  document.querySelector(`[data-date-for="${id}"]`).setAttribute("aria-expanded", "true");
+  $(`${id}-picker`).querySelector(".date-picker__day.is-selected")?.focus();
+}
+
+window.addEventListener("resize", () => {
+  if (pickerState.openId) positionDatePicker();
+});
+
+for (const id of ["snapshot"]) {
+  const input = $(id);
+  input.addEventListener("click", () => openDatePicker(id));
+  input.addEventListener("keydown", (event) => {
+    if (!["Enter", " ", "ArrowDown"].includes(event.key)) return;
+    event.preventDefault();
+    openDatePicker(id);
+  });
+  document.querySelector(`[data-date-for="${id}"]`).addEventListener("click", () => openDatePicker(id));
+}
+
+document.addEventListener("click", (event) => {
+  const dayButton = event.target.closest(".date-picker__day");
+  if (dayButton && pickerState.openId) {
+    syncPickerTime();
+    const { year, month, draft } = pickerState;
+    pickerState.draft = new Date(year, month, Number(dayButton.dataset.day), draft.getHours(), draft.getMinutes());
+    renderDatePicker();
+    $(`${pickerState.openId}-picker`).querySelector(".date-picker__day.is-selected")?.focus();
+    return;
+  }
+  const action = event.target.closest("[data-calendar-action]")?.dataset.calendarAction;
+  if (!action || !pickerState.openId) return;
+  if (action === "cancel") return closeDatePicker(true);
+  if (action === "apply") {
+    if (syncPickerTime() === false) return;
+    const id = pickerState.openId;
+    setDateValue(id, pickerState.draft);
+    closeDatePicker(true);
+    render();
+    saveState();
+    return;
+  }
+  if (action === "now") {
+    pickerState.draft = new Date();
+    pickerState.draft.setSeconds(0, 0);
+    pickerState.year = pickerState.draft.getFullYear();
+    pickerState.month = pickerState.draft.getMonth();
+  } else {
+    syncPickerTime();
+    const view = new Date(pickerState.year, pickerState.month + (action === "next" ? 1 : -1), 1);
+    pickerState.year = view.getFullYear();
+    pickerState.month = view.getMonth();
+  }
+  renderDatePicker();
+});
+
+document.addEventListener("input", (event) => {
+  if (event.target.matches('.date-picker [data-time-unit]')) syncPickerTime();
+});
+document.addEventListener("pointerdown", (event) => {
+  if (pickerState.openId && !event.target.closest(".date-control")) closeDatePicker();
+});
+document.addEventListener("keydown", (event) => {
+  if (!pickerState.openId) return;
+  if (event.key === "Escape") {
+    event.preventDefault();
+    closeDatePicker(true);
+    return;
+  }
+  const day = event.target.closest(".date-picker__day");
+  const delta = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[event.key];
+  if (!day || !delta) return;
+  event.preventDefault();
+  syncPickerTime();
+  const { year, month, draft } = pickerState;
+  pickerState.draft = new Date(year, month, Number(day.dataset.day) + delta, draft.getHours(), draft.getMinutes());
+  pickerState.year = pickerState.draft.getFullYear();
+  pickerState.month = pickerState.draft.getMonth();
+  renderDatePicker();
+  $(`${pickerState.openId}-picker`).querySelector(".date-picker__day.is-selected")?.focus();
+});
+
+
 $("accounts-grid").innerHTML = accounts.map(accountMarkup).join("");
 initNumberControls($("accounts-grid"));
 document.querySelectorAll(".progress-track").forEach((track) => {
@@ -267,6 +453,7 @@ const accountFields = ["current", "target", "rebirths", "minutes"];
 function saveState() {
   const state = {
     accountCount,
+    snapshot: $("snapshot").dataset.value,
     accounts: Object.fromEntries(accounts.map(({ key }) => [key,
       Object.fromEntries(accountFields.map((field) => [field, $(`${key}-${field}`).value]))])),
   };
@@ -286,6 +473,7 @@ function restoreState() {
   }
   if (!state || typeof state !== "object") return;
   if ([1, 2, 3].includes(state.accountCount)) accountCount = state.accountCount;
+  setDateValue("snapshot", restoreSnapshot(state.snapshot, readDate($("snapshot"))));
   for (const { key } of accounts) {
     for (const field of accountFields) {
       const value = state.accounts?.[key]?.[field];
@@ -308,7 +496,10 @@ function setAccountCount(count, persist = true) {
 }
 
 document.querySelectorAll(".account-count").forEach((button) => button.addEventListener("click", () => setAccountCount(Number(button.dataset.count))));
+setDateValue("snapshot", new Date());
 restoreState();
+// Persist the initial timestamp once, including migration from older saved inputs.
+saveState();
 document.querySelectorAll("#accounts-grid input").forEach((input) => {
   const update = () => { render(); saveState(); };
   input.addEventListener("input", update);
@@ -325,3 +516,6 @@ toolMenu.addEventListener("keydown", (event) => {
   }
 });
 setAccountCount(accountCount, false);
+setInterval(render, 10000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) render(); });
+window.addEventListener("pageshow", render);
