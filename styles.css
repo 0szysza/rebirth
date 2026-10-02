@@ -56,16 +56,12 @@ h1,h2,h3,p{margin:0}
 .account-count.is-active{border-color:#34425f;background:#253049;color:#f8fafc}
 .calculation-modes{margin-top:14px}
 .calculation-mode{display:inline-flex;align-items:center;justify-content:center;gap:7px}
-.interval-settings{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:18px 24px;margin-bottom:16px;padding:16px;border:1px solid #262d4a;border-radius:11px;background:#15192d}
-.interval-mode-field{display:flex;flex-direction:column;gap:7px}
-.interval-settings__label{display:flex;align-items:center;gap:7px;min-height:16px;color:#a8b5c9;font-size:12px;font-weight:700;line-height:16px}
-.interval-settings__label .icon{width:16px;height:16px;color:#5CDDFA}
+.interval-settings{display:flex;align-items:flex-end;width:fit-content;max-width:100%;margin-bottom:16px;padding:16px;border:1px solid #262d4a;border-radius:11px;background:#15192d}
 .interval-duration{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:300px}
 .interval-end-field{width:300px}
-.duration-modes .account-count{min-height:32px}
 body[data-calculator-mode=interval] .account-card__fields{grid-template-columns:1fr}
 body[data-calculator-mode=interval] .eta-block strong{overflow-wrap:anywhere}
-@media(max-width:680px){.calculation-modes{display:flex;width:100%}.interval-settings{display:grid;grid-template-columns:1fr;padding:14px;gap:16px}.interval-duration,.interval-end-field{width:100%}.duration-modes{display:flex}.duration-mode{flex:1}.calculation-mode{flex:1}}
+@media(max-width:680px){.calculation-modes{display:flex;width:100%}.calculation-mode{flex:1;min-width:0;padding-inline:8px;white-space:nowrap}.interval-settings{display:grid;grid-template-columns:1fr;width:100%;padding:14px}.interval-duration,.interval-end-field{width:100%}}
 
 .field{min-width:0}
 .field label{display:block;margin-bottom:7px;color:#a8b5c9;font-size:12px;font-weight:700}

@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261002-16">
-  <script type="module" src="app.js?v=20261002-16"></script>
+  <link rel="stylesheet" href="styles.css?v=20261002-17">
+  <script type="module" src="app.js?v=20261002-17"></script>
 <link rel="canonical" href="https://0szysza.github.io/rebirth/">
 <meta name="description" content="Track your BGSI rebirth grind for up to three named accounts. Estimate a goal finish time or rebirths gained over a custom time interval, with saved inputs and your own pace.">
 <meta property="og:type" content="website">
@@ -73,8 +73,9 @@
         <h1 id="account-selector-title">Rebirth Calculator</h1>
         <p id="calculator-description">Set your rebirth counts and pace to see when each account reaches its goal.</p>
         <div class="calculation-modes account-selector__buttons" role="group" aria-label="Calculation mode">
-          <button class="calculation-mode account-count is-active" type="button" data-mode="goal" aria-pressed="true">Target goal</button>
-          <button class="calculation-mode account-count" type="button" data-mode="interval" aria-pressed="false">Time interval</button>
+          <button class="calculation-mode account-count is-active" type="button" data-mode="goal" aria-pressed="true">Reach a goal</button>
+          <button class="calculation-mode account-count" type="button" data-mode="duration" aria-pressed="false">For a duration</button>
+          <button class="calculation-mode account-count" type="button" data-mode="until" aria-pressed="false">Until a time</button>
         </div>
       </div>
       <div class="selector-controls">
@@ -98,13 +99,6 @@
     </section>
 
     <section class="interval-settings" id="interval-settings" aria-label="Time interval" hidden>
-      <div class="interval-mode-field">
-        <span class="interval-settings__label" id="duration-mode-label"><svg class="icon" aria-hidden="true"><use href="#icon-clock"></use></svg><span>Duration</span></span>
-        <div class="duration-modes account-selector__buttons" role="group" aria-labelledby="duration-mode-label">
-          <button class="duration-mode account-count is-active" type="button" data-duration-mode="duration" aria-pressed="true">For a duration</button>
-          <button class="duration-mode account-count" type="button" data-duration-mode="until" aria-pressed="false">Until a time</button>
-        </div>
-      </div>
       <div class="interval-duration" id="duration-fields">
         <div class="field"><label for="interval-hours">Hours</label><input id="interval-hours" type="number" min="0" step="any" inputmode="decimal" value="2"></div>
         <div class="field"><label for="interval-minutes">Minutes</label><input id="interval-minutes" type="number" min="0" max="59" step="1" inputmode="numeric" value="0"></div>

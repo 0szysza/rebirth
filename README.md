@@ -8,7 +8,7 @@ Track your rebirth grind toward a target or across a fixed time interval, with s
 
 | Feature | What it does |
 | --- | --- |
-| Two calculation modes | Target goal estimates when a count is reached. Time interval estimates the final count and gained rebirths over a chosen duration. |
+| Three calculation options | One selector offers **Reach a goal**, **For a duration** and **Until a time**. Estimate a goal finish time or the total and gained rebirths over a duration or up to a deadline. |
 | 1, 2 or 3 accounts | Choose how many accounts to track. Every account keeps its own inputs and occupies a full-width card. |
 | Custom account names | Rename Account 1/2/3 with the edit icon; save, cancel or reset to the default name. Reset appears only while editing a custom name. |
 | Separate account colors | Cyan, purple and pink make the three accounts easy to distinguish. |
@@ -19,7 +19,7 @@ Track your rebirth grind toward a target or across a fixed time interval, with s
 | Live estimates | Current estimated count, progress, remaining rebirths, time left and an ETA update as time passes. |
 | Precise progress inspection | Hover, tap or use arrow keys to inspect a point to **0.1%**, including its count, estimated time and goal finish time. |
 | Completed goals | Estimates continue counting after the target while retaining the original goal time. Earlier points show approximate historical estimates. |
-| Device-local saving | Names, account count and the selected calculation mode survive reopening. Each mode keeps separate inputs and a fixed starting timestamp; the duration option, hours/minutes and end time are saved too. |
+| Device-local saving | Names, account count and the selected option survive reopening. Goal and time forecasts keep separate inputs and fixed starting timestamps; hours/minutes and the end time are saved too. |
 | Inline help | Small help controls explain the recorded starting time. |
 | Responsive layout | Inputs and results sit side by side on desktop, with stacked sections on smaller screens. |
 | Shared navigation | The Tools dropdown opens CCU Tracker; the header arrow opens the tool hub. Social links stay in the footer. |
@@ -27,9 +27,9 @@ Track your rebirth grind toward a target or across a fixed time interval, with s
 
 ## How to use it
 
-### Target goal
+### Reach a goal
 
-Select **Target goal**.
+Select **Reach a goal**.
 
 1. Choose **1 Account**, **2 Accounts** or **3 Accounts**.
 2. Set **Counts recorded at** to the time your starting counts were measured. Use **Now** when recording a fresh set.
@@ -39,12 +39,12 @@ Select **Target goal**.
 
 Rename accounts with the pencil icon. The green check saves, the red X cancels, and the colored reset icon restores the default name.
 
-### Time interval
+### For a duration / Until a time
 
-1. Select **Time interval** and choose how many accounts to track.
+1. Select **For a duration** or **Until a time** in the main selector and choose how many accounts to track.
 2. Enter the starting count and rebirth pace for each account.
 3. Set **Interval starts at** with the calendar. Its **Now** button selects the current time when recording fresh counts.
-4. In **Duration**, select **For a duration** and enter **Hours** and **Minutes**, or select **Until a time** and choose an **End date and time**. Choose the following date for a finish after midnight.
+4. In **For a duration**, enter **Hours** and **Minutes**. In **Until a time**, choose an **End date and time**. Choose the following date for a finish after midnight.
 5. Read **Rebirths at interval end**, **Rebirths gained**, **Estimated now** and **Time left**.
 
 The progress bar measures elapsed time. Inspect a point for the count, gained rebirths and timestamp at that part of the interval. Returning later preserves the end time. A completed interval stops its estimate at the end. Record fresh starting counts and select **Now** in the start calendar to begin again; in **Until a time**, also choose a new end time.
@@ -63,7 +63,7 @@ The clock advances the estimated count rather than moving the recorded starting 
 
 These are estimates at a constant pace. The calculator does not read Roblox account data and cannot detect pauses or changes in rebirth speed. Update the starting counts and recorded time when measuring a new pace. Earlier points are extrapolated at the entered pace.
 
-For Time interval, with duration `D` in minutes:
+For either time option, with duration `D` in minutes:
 
 ~~~text
 Rebirths gained = D × R / M
@@ -73,4 +73,4 @@ Estimated now  = C + clamp(elapsed minutes since S, 0, D) × R / M
 Time progress  = clamp(elapsed minutes since S / D, 0, 1) × 100%
 ~~~
 
-In **Until a time**, `D` is the difference in minutes between the selected end and the recorded start. The end must be after the start. Duration must be positive. A zero rebirth pace still gives a valid interval: the count stays unchanged while the timer advances. The two modes keep independent inputs and starting times in device-local storage.
+In **Until a time**, `D` is the difference in minutes between the selected end and the recorded start. The end must be after the start. Duration must be positive. A zero rebirth pace still gives a valid interval: the count stays unchanged while the timer advances. Goal and time forecasts keep independent inputs and starting times in device-local storage. The two time options share the starting counts and pace while retaining both the duration and deadline settings.

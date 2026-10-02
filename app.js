@@ -638,11 +638,6 @@ function syncCalculatorMode() {
     : "Enter the rebirth counts you had at this time. This saved starting point keeps your finish time fixed. Estimates assume you keep rebirthing at the entered pace.";
   $("snapshot-picker").setAttribute("aria-label", isInterval ? "Interval start date and time" : "Recorded date and time");
   document.querySelector('[data-date-for="snapshot"]').setAttribute("aria-label", isInterval ? "Choose interval start date and time" : "Choose recorded date and time");
-  document.querySelectorAll(".calculation-mode").forEach(button => {
-    const active = button.dataset.mode === calculatorMode;
-    button.classList.toggle("is-active", active);
-    button.setAttribute("aria-pressed", String(active));
-  });
   for (const {key} of accounts) {
     const card = document.querySelector(`[data-account="${key}"]`);
     card.querySelector(".target-field").hidden = isInterval;
@@ -659,8 +654,9 @@ function syncCalculatorMode() {
 function syncDurationMode() {
   $("duration-fields").hidden = durationMode !== "duration";
   $("end-time-field").hidden = durationMode !== "until";
-  document.querySelectorAll(".duration-mode").forEach(button => {
-    const active = button.dataset.durationMode === durationMode;
+  const option = calculatorMode === "goal" ? "goal" : durationMode;
+  document.querySelectorAll(".calculation-mode").forEach(button => {
+    const active = button.dataset.mode === option;
     button.classList.toggle("is-active", active);
     button.setAttribute("aria-pressed", String(active));
   });
@@ -693,6 +689,13 @@ function setCalculatorMode(mode) {
   syncCalculatorMode();
   render();
   saveState();
+}
+
+function setCalculationOption(option) {
+  if (!["goal", "duration", "until"].includes(option)) return;
+  // Preserve the existing saved goal/interval inputs behind the three options.
+  setCalculatorMode(option === "goal" ? "goal" : "interval");
+  if (option !== "goal") setDurationMode(option);
 }
 
 function restoreState() {
@@ -730,8 +733,7 @@ function setAccountCount(count, persist = true) {
 }
 
 document.querySelectorAll(".account-count[data-count]").forEach((button) => button.addEventListener("click", () => setAccountCount(Number(button.dataset.count))));
-document.querySelectorAll(".calculation-mode").forEach(button => button.addEventListener("click", () => setCalculatorMode(button.dataset.mode)));
-document.querySelectorAll(".duration-mode").forEach(button => button.addEventListener("click", () => setDurationMode(button.dataset.durationMode)));
+document.querySelectorAll(".calculation-mode").forEach(button => button.addEventListener("click", () => setCalculationOption(button.dataset.mode)));
 setDateValue("snapshot", new Date());
 restoreState();
 syncCalculatorMode();
