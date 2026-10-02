@@ -46,12 +46,3 @@ Progress      = min(100%, estimated now / T × 100%)
 The clock advances the estimated count rather than moving the recorded starting point. Returning later therefore keeps the original finish time. A target of zero is complete, and a zero pace leaves the count unchanged without inventing a finish time.
 
 These are estimates at a constant pace. The calculator does not read Roblox account data and cannot detect pauses or changes in rebirth speed. Update the starting counts and recorded time when measuring a new pace. Earlier points are extrapolated at the entered pace.
-
-## Saving and privacy
-
-Inputs are stored in the browser’s `localStorage` under `rebirth-calculator:v1`. Calculator values are not submitted to a server. Clearing site storage removes them; another browser/device has separate values. The initial first and second accounts are editable examples, while the third begins empty.
-
-- [CCU Tracker](https://0szysza.github.io/trackccu/) — Roblox games, groups and historical charts.
-- [Tool hub](https://0szysza.github.io/) — both tools in one place.
-
-Built by [0szysza](https://github.com/0szysza). Independent fan-made tool; not affiliated with Roblox or Rumble Studios.
