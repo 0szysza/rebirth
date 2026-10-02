@@ -133,14 +133,44 @@ h1,h2,h3,p{margin:0}
 .pace-fields{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:11px}
 .pace-fields__per{display:grid;place-items:center;align-self:end;height:42px;color:#94a3b8;font-size:12px}
 .account-card__results{margin-top:17px;padding-top:15px;border-top:1px solid #293149}
-.progress-line{display:flex;justify-content:space-between;gap:8px;margin-bottom:4px;color:#94a3b8;font-size:12px;font-weight:600}
+.progress-line{display:flex;align-items:center;gap:8px;margin-bottom:2px;color:#94a3b8;font-size:12px;font-weight:600}
+.progress-line>span{margin-right:auto}
 .progress-line strong{color:var(--accent);font-variant-numeric:tabular-nums}
+.progress-actions{display:flex;align-items:center;gap:2px}
+.progress-range-button,.progress-range-clear{display:inline-flex;align-items:center;justify-content:center;gap:5px;height:30px;padding:0 7px;border:0;border-radius:5px;background:transparent;color:#91a0b5;font-size:11px;font-weight:600;cursor:pointer}
+.progress-range-button .icon,.progress-range-clear .icon{width:14px;height:14px}
+.progress-range-button:hover,.progress-range-button.is-selected,.progress-range-clear:hover{background:#222b40;color:var(--accent)}
+.progress-range-button:disabled{opacity:.4;cursor:default;background:transparent;color:#91a0b5}
+.progress-range-clear{width:26px;padding:0}
 .progress-inspector{position:relative}
-.progress-track{position:relative;height:20px;cursor:default}
-.progress-track::before{content:"";position:absolute;top:6px;left:0;right:0;height:7px;border-radius:99px;background:#2b354b}
-.progress-track>span{position:absolute;top:6px;left:0;display:block;width:0;height:7px;border-radius:99px;background:var(--accent);transition:width .2s;pointer-events:none}
+.progress-rail{position:relative;user-select:none;-webkit-user-select:none;touch-action:pan-y pinch-zoom}
+.progress-track{position:relative;height:28px;cursor:default;touch-action:pan-y pinch-zoom}
+.progress-track::before{content:"";position:absolute;top:10px;left:0;right:0;height:7px;border-radius:99px;background:#2b354b}
+.progress-fill{position:absolute;top:10px;left:0;display:block;width:0;height:7px;border-radius:99px;background:var(--accent);transition:width .2s;pointer-events:none}
+.progress-track.has-selection .progress-fill{opacity:.4}
+.progress-ticks{position:absolute;inset:10px 0 auto;height:7px;pointer-events:none}
+.progress-ticks i{position:absolute;width:1px;height:7px;background:#15192d80}
+.progress-ticks i:nth-child(1){left:25%}.progress-ticks i:nth-child(2){left:50%}.progress-ticks i:nth-child(3){left:75%}
+.progress-selection{position:absolute;top:8px;height:11px;border:1px solid var(--accent);border-radius:3px;background:color-mix(in srgb,var(--accent) 40%,#15192d);pointer-events:none}
+.progress-handle{position:absolute;top:-2px;width:28px;height:32px;padding:0;border:0;border-radius:5px;background:transparent;transform:translateX(-50%);cursor:col-resize;touch-action:pan-y pinch-zoom;z-index:2}
+.progress-handle::before{content:"";position:absolute;left:calc(50% - 2px);top:7px;width:4px;height:19px;border-radius:2px;background:var(--accent);box-shadow:0 0 0 2px #15192d}
+.progress-handle:hover::before,.progress-handle:focus-visible::before{background:#f8fafc}
+.progress-handle:active,.progress-handle:focus-visible{z-index:3}
+.progress-handle:focus-visible{outline-color:var(--accent)}
+.progress-range-summary{margin-top:8px;padding:10px 11px;border:1px solid #303a55;border-radius:8px;background:#111729;font-size:11px;font-variant-numeric:tabular-nums}
+.progress-range-summary__head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:9px}
+.progress-range-summary__head strong{color:var(--accent);font-size:12px;font-weight:700}
+.progress-range-summary__head>span{color:#e2e8f0;font-weight:600;text-align:right}
+.progress-range-summary__points{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.progress-range-summary__points span{display:block;color:#91a0b5}
+.progress-range-summary__points strong{color:#e2e8f0;font-weight:600}
+.progress-range-summary__points time{display:block;margin-top:4px;color:#a8b5c9;line-height:1.5;overflow-wrap:anywhere}
+.progress-range-summary__duration{display:flex;justify-content:space-between;gap:8px;margin-top:9px;padding-top:8px;border-top:1px solid #293149;color:#91a0b5}
+.progress-range-summary__duration strong{color:#f1f5f9;font-weight:600}
+@media(pointer:coarse){.progress-range-button,.progress-range-clear{height:36px}.progress-range-clear{width:32px}.progress-track{height:36px}.progress-track::before,.progress-fill,.progress-ticks{top:14px}.progress-selection{top:12px}.progress-handle{top:0;height:36px}.progress-handle::before{top:9px}}
 .progress-track:focus-visible{border-radius:5px}
-.progress-hover-marker{position:absolute;top:3px;width:2px;height:13px;border-radius:2px;background:#fff;box-shadow:0 0 0 2px #15192d;transform:translateX(-50%);pointer-events:none}
+.progress-hover-marker{position:absolute;top:7px;width:2px;height:13px;border-radius:2px;background:#fff;box-shadow:0 0 0 2px #15192d;transform:translateX(-50%);pointer-events:none}
+@media(pointer:coarse){.progress-hover-marker{top:11px}}
 .progress-tooltip{position:absolute;bottom:calc(100% + 7px);width:248px;padding:10px 11px;border:1px solid #3d4b66;border-radius:9px;background:#202a40;box-shadow:0 10px 24px rgba(0,0,0,.32);transform:translateX(-50%);pointer-events:none;z-index:3;font-size:11px}
 .progress-tooltip__head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding-bottom:7px;margin-bottom:6px;border-bottom:1px solid #3d4b66}
 .progress-tooltip__head strong{color:var(--accent);font-size:14px;font-weight:800;font-variant-numeric:tabular-nums}

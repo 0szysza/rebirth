@@ -1,4 +1,5 @@
 import { calculate, restoreSnapshot } from "./calc.mjs?v=20261002-5";
+import { progressPercent, progressRange, estimatePoint, estimateRange } from "./progress.mjs?v=20261002-12";
 
 const $ = (id) => document.getElementById(id);
 const accounts = [
@@ -17,6 +18,7 @@ const calendarMonthFormat = new Intl.DateTimeFormat("en-GB", { month: "long", ye
 const calendarDayFormat = new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 const accountCalculations = new Map();
 const previewPositions = new Map();
+const selectedRanges = new Map();
 let accountCount = 2;
 document.body.dataset.accountCount = String(accountCount);
 
@@ -51,14 +53,37 @@ function accountMarkup(account) {
         <div class="field"><label for="${key}-minutes">Minutes</label><input id="${key}-minutes" type="number" min="0.01" step="any" inputmode="decimal" value="10"></div>
       </div></fieldset>
       <div class="account-card__results" aria-live="polite">
-        <div class="progress-line"><span>Estimated progress</span><strong id="${key}-progress-text">—</strong></div>
-        <div class="progress-inspector">
-          <div class="progress-track" role="progressbar" tabindex="0" aria-label="${name} progress" aria-description="Hover, tap, or use arrow keys to inspect a point" aria-describedby="${key}-progress-tooltip" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="${key}-progress-bar"></span></div>
+        <div class="progress-line">
+          <span>Estimated progress</span>
+          <div class="progress-actions">
+            <button type="button" class="progress-range-button" id="${key}-range-select" aria-label="Select a range for ${name}" aria-controls="${key}-range-summary" aria-expanded="false" title="Drag across the bar to select a range"><svg class="icon" aria-hidden="true"><use href="#icon-range"></use></svg><span>Range</span></button>
+            <button type="button" class="progress-range-clear" id="${key}-range-clear" aria-label="Clear selected range for ${name}" title="Clear range" hidden><svg class="icon" aria-hidden="true"><use href="#icon-x"></use></svg></button>
+          </div>
+          <strong id="${key}-progress-text">—</strong>
+        </div>
+        <div class="progress-inspector" aria-live="off">
+          <div class="progress-rail">
+          <div class="progress-track" role="progressbar" tabindex="0" aria-label="${name} progress" aria-description="Hover or tap to inspect a point. Drag across the bar to select a range, or use the Range button." aria-describedby="${key}-progress-tooltip" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <span class="progress-fill" id="${key}-progress-bar"></span>
+            <span class="progress-ticks" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="progress-selection" id="${key}-range-selection" hidden aria-hidden="true"></span>
+          </div>
+          <button type="button" class="progress-handle progress-handle--start" id="${key}-range-start" role="slider" aria-label="${name} range start" aria-description="Use left and right arrows to adjust by 0.1%. Hold Shift to adjust by 1%. Escape clears the range." aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden></button>
+          <button type="button" class="progress-handle progress-handle--end" id="${key}-range-end" role="slider" aria-label="${name} range end" aria-description="Use left and right arrows to adjust by 0.1%. Hold Shift to adjust by 1%. Escape clears the range." aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" hidden></button>
           <span class="progress-hover-marker" id="${key}-progress-marker" hidden aria-hidden="true"></span>
           <div class="progress-tooltip" id="${key}-progress-tooltip" role="tooltip" aria-live="off" hidden>
             <div class="progress-tooltip__head"><strong id="${key}-hover-percent">—</strong><span id="${key}-hover-count">—</span></div>
             <div class="progress-tooltip__row"><span>At this point</span><strong id="${key}-hover-time">—</strong></div>
             <div class="progress-tooltip__row"><span>Estimated finish</span><strong id="${key}-hover-finish">—</strong></div>
+          </div>
+          </div>
+          <div class="progress-range-summary" id="${key}-range-summary" hidden>
+            <div class="progress-range-summary__head"><strong id="${key}-range-percent">—</strong><span id="${key}-range-gain">—</span></div>
+            <div class="progress-range-summary__points">
+              <div><span>From <strong id="${key}-range-from-count">—</strong></span><time id="${key}-range-from-time">—</time></div>
+              <div><span>To <strong id="${key}-range-to-count">—</strong></span><time id="${key}-range-to-time">—</time></div>
+            </div>
+            <div class="progress-range-summary__duration"><span>Time for this range</span><strong id="${key}-range-duration">—</strong></div>
           </div>
         </div>
         <div class="eta-block"><span id="${key}-eta-label">Estimated finish</span><strong id="${key}-eta">—</strong><small id="${key}-eta-date">—</small></div>
@@ -116,15 +141,9 @@ function hideProgressTooltip(key) {
 function showProgressTooltip(key, rawPercent) {
   const data = accountCalculations.get(key);
   if (!data) return;
-  const percent = Math.max(0, Math.min(100, Math.round(rawPercent * 10) / 10));
-  const count = Math.round(data.target * percent / 100);
-  let pointTime = formatDateTime(data.snapshot);
-  if (count !== data.current) {
-    const timestamp = data.snapshot.getTime() + (count - data.current) * data.pace.minutes / data.pace.rebirths * 60000;
-    pointTime = data.pace.rebirths === 0 ? "No pace estimate"
-      : Number.isFinite(timestamp) && Math.abs(timestamp) <= 8640000000000000
-        ? `${count < data.current ? "≈ " : ""}${formatDateTime(new Date(timestamp))}` : "Out of range";
-  }
+  const point = estimatePoint(data, rawPercent);
+  const { percent, count } = point;
+  const pointTime = formatPointTime(point, data);
   const goalTime = data.result.eta ? formatDateTime(data.result.eta)
       : data.pace.rebirths === 0 ? "No pace" : "Out of range";
   $(`${key}-hover-percent`).textContent = `${percentFormat.format(percent)}%`;
@@ -144,9 +163,76 @@ function showProgressTooltip(key, rawPercent) {
   previewPositions.set(key, percent);
 }
 
+function formatPointTime(point, data) {
+  return point.time ? `${point.historical ? "≈ " : ""}${formatDateTime(point.time)}`
+    : data.pace.rebirths === 0 ? "No pace estimate" : "Out of range";
+}
+
+function renderProgressRange(key) {
+  const data = accountCalculations.get(key);
+  const range = selectedRanges.get(key);
+  const available = Boolean(data && data.target > 0);
+  const visible = available && Boolean(range);
+  const select = $(`${key}-range-select`);
+  select.disabled = !available;
+  select.setAttribute("aria-expanded", String(visible));
+  select.classList.toggle("is-selected", visible);
+  $(`${key}-range-summary`).hidden = !visible;
+  $(`${key}-range-clear`).hidden = !visible;
+  $(`${key}-range-selection`).hidden = !visible;
+  $(`${key}-range-start`).hidden = !visible;
+  $(`${key}-range-end`).hidden = !visible;
+  $(`${key}-progress-bar`).parentElement.classList.toggle("has-selection", visible);
+  if (!visible) return;
+
+  const estimate = estimateRange(data, range.start, range.end);
+  const overlay = $(`${key}-range-selection`);
+  overlay.style.left = `${range.start}%`;
+  overlay.style.width = `${range.end - range.start}%`;
+  for (const endpoint of ["start", "end"]) {
+    const handle = $(`${key}-range-${endpoint}`);
+    const point = estimate[endpoint];
+    handle.style.left = `${point.percent}%`;
+    handle.setAttribute("aria-valuenow", String(point.percent));
+    handle.setAttribute("aria-valuemin", endpoint === "start" ? "0" : String(progressPercent(range.start + 0.1)));
+    handle.setAttribute("aria-valuemax", endpoint === "end" ? "100" : String(progressPercent(range.end - 0.1)));
+    handle.setAttribute("aria-valuetext", `${percentFormat.format(point.percent)}%, ${numberFormat.format(point.count)} rebirths, ${formatPointTime(point, data)}`);
+  }
+  $(`${key}-range-percent`).textContent = `${percentFormat.format(range.start)}–${percentFormat.format(range.end)}%`;
+  $(`${key}-range-gain`).textContent = `${numberFormat.format(estimate.count)} rebirths`;
+  $(`${key}-range-from-count`).textContent = numberFormat.format(estimate.start.count);
+  $(`${key}-range-to-count`).textContent = numberFormat.format(estimate.end.count);
+  for (const [label, point] of [["from", estimate.start], ["to", estimate.end]]) {
+    const element = $(`${key}-range-${label}-time`);
+    element.textContent = formatPointTime(point, data);
+    if (point.time) element.dateTime = point.time.toISOString();
+    else element.removeAttribute("datetime");
+  }
+  $(`${key}-range-duration`).textContent = formatDuration(estimate.duration);
+}
+
+function setProgressRange(key, from, to) {
+  const range = progressRange(from, to);
+  if (range.start === range.end) {
+    if (range.end < 100) range.end = progressPercent(range.end + 0.1);
+    else range.start = 99.9;
+  }
+  selectedRanges.set(key, range);
+  hideProgressTooltip(key);
+  renderProgressRange(key);
+}
+
+function clearProgressRange(key, focus = true) {
+  selectedRanges.delete(key);
+  renderProgressRange(key);
+  if (focus) $(`${key}-progress-bar`).parentElement.focus();
+  hideProgressTooltip(key);
+}
+
 function clearResult(key, message, neutral = false) {
   accountCalculations.delete(key);
   hideProgressTooltip(key);
+  renderProgressRange(key);
   for (const id of ["progress-text", "eta", "eta-date", "remaining", "duration", "projected"]) $(`${key}-${id}`).textContent = "—";
   $(`${key}-eta-label`).textContent = "Estimated finish";
   $(`${key}-quick-eta`).textContent = "—";
@@ -198,6 +284,7 @@ function renderAccount(key, common) {
   }
   $(`${key}-message`).textContent = "";
   $(`${key}-message`).classList.remove("is-neutral");
+  renderProgressRange(key);
   if (!$(`${key}-progress-tooltip`).hidden) showProgressTooltip(key, previewPositions.get(key) ?? result.progress);
 }
 
@@ -452,6 +539,9 @@ function setAccountName(account, value) {
   card.querySelector(".account-name__edit").setAttribute("aria-label", `Rename ${account.name}`);
   card.querySelector(".account-name__form").setAttribute("aria-label", `Rename ${account.name}`);
   card.querySelector(".progress-track").setAttribute("aria-label", `${account.name} progress`);
+  $(`${account.key}-range-select`).setAttribute("aria-label", `Select a range for ${account.name}`);
+  $(`${account.key}-range-clear`).setAttribute("aria-label", `Clear selected range for ${account.name}`);
+  for (const endpoint of ["start", "end"]) $(`${account.key}-range-${endpoint}`).setAttribute("aria-label", `${account.name} range ${endpoint}`);
   $(`${account.key}-name`).value = account.name;
   updateAccountNameReset(account);
 }
@@ -506,21 +596,72 @@ for (const account of accounts) {
 
 document.querySelectorAll(".progress-track").forEach((track) => {
   const key = track.closest("[data-account]").dataset.account;
-  const inspectPointer = (event) => {
+  const rail = track.parentElement;
+  let drag = null;
+  const pointerPercent = (event) => {
     const rect = track.getBoundingClientRect();
-    showProgressTooltip(key, (event.clientX - rect.left) / rect.width * 100);
+    return progressPercent((event.clientX - rect.left) / rect.width * 100);
   };
-  track.addEventListener("pointermove", inspectPointer);
-  track.addEventListener("pointerdown", inspectPointer);
-  track.addEventListener("pointerleave", (event) => {
-    if (event.pointerType !== "touch") hideProgressTooltip(key);
+  const moveEndpoint = (endpoint, percent) => {
+    const range = selectedRanges.get(key);
+    if (!range) return;
+    const min = endpoint === "start" ? 0 : progressPercent(range.start + 0.1);
+    const max = endpoint === "end" ? 100 : progressPercent(range.end - 0.1);
+    const next = Math.max(min, Math.min(max, progressPercent(percent)));
+    setProgressRange(key, endpoint === "start" ? next : range.start, endpoint === "end" ? next : range.end);
+  };
+  const beginDrag = (event, endpoint = null) => {
+    if (event.button !== 0 || event.isPrimary === false || !accountCalculations.has(key)) return;
+    const anchor = pointerPercent(event);
+    drag = { pointerId: event.pointerId, element: event.currentTarget, endpoint, anchor,
+      x: event.clientX, y: event.clientY, active: Boolean(endpoint), previous: selectedRanges.get(key) };
+    event.currentTarget.setPointerCapture(event.pointerId);
+    if (endpoint) hideProgressTooltip(key);
+    else showProgressTooltip(key, anchor);
+  };
+  track.addEventListener("pointerdown", (event) => beginDrag(event));
+  rail.addEventListener("pointermove", (event) => {
+    if (!drag) {
+      if (event.target.closest(".progress-track")) showProgressTooltip(key, pointerPercent(event));
+      return;
+    }
+    if (event.pointerId !== drag.pointerId) return;
+    const deltaX = Math.abs(event.clientX - drag.x);
+    const deltaY = Math.abs(event.clientY - drag.y);
+    if (!drag.active && deltaX < 5) return;
+    if (!drag.active && event.pointerType === "touch" && deltaY > deltaX) return;
+    if (accountCalculations.get(key)?.target <= 0) return;
+    drag.active = true;
+    if (drag.endpoint) moveEndpoint(drag.endpoint, pointerPercent(event));
+    else setProgressRange(key, drag.anchor, pointerPercent(event));
   });
-  track.addEventListener("focus", () => showProgressTooltip(key, previewPositions.get(key) ?? accountCalculations.get(key)?.result.progress ?? 0));
+  const endDrag = (event, cancelled = false) => {
+    if (!drag || event.pointerId !== drag.pointerId) return;
+    const finished = drag;
+    drag = null;
+    if (cancelled) {
+      if (finished.previous) selectedRanges.set(key, finished.previous);
+      else selectedRanges.delete(key);
+      renderProgressRange(key);
+    }
+    if (finished.active || cancelled) hideProgressTooltip(key);
+    if (finished.element.hasPointerCapture(event.pointerId)) finished.element.releasePointerCapture(event.pointerId);
+  };
+  rail.addEventListener("pointerup", (event) => endDrag(event));
+  rail.addEventListener("pointercancel", (event) => endDrag(event, true));
+  rail.addEventListener("lostpointercapture", (event) => endDrag(event, true));
+  rail.addEventListener("pointerleave", (event) => {
+    if (!drag && event.pointerType !== "touch") hideProgressTooltip(key);
+  });
+  track.addEventListener("focus", () => {
+    if (!selectedRanges.has(key)) showProgressTooltip(key, previewPositions.get(key) ?? accountCalculations.get(key)?.result.progress ?? 0);
+  });
   track.addEventListener("blur", () => hideProgressTooltip(key));
   track.addEventListener("keydown", (event) => {
     if (!["ArrowLeft", "ArrowRight", "Home", "End", "Escape"].includes(event.key)) return;
     event.preventDefault();
     if (event.key === "Escape") {
+      clearProgressRange(key, false);
       hideProgressTooltip(key);
       track.blur();
       return;
@@ -530,6 +671,32 @@ document.querySelectorAll(".progress-track").forEach((track) => {
       : current + (event.key === "ArrowRight" ? 0.1 : -0.1);
     showProgressTooltip(key, next);
   });
+  $(`${key}-range-select`).addEventListener("click", () => {
+    const data = accountCalculations.get(key);
+    if (!data || data.target <= 0) return;
+    if (!selectedRanges.has(key)) {
+      const start = progressPercent(data.result.progress);
+      setProgressRange(key, start >= 100 ? 90 : start, 100);
+    }
+    $(`${key}-range-start`).focus();
+    hideProgressTooltip(key);
+  });
+  $(`${key}-range-clear`).addEventListener("click", () => clearProgressRange(key));
+  for (const endpoint of ["start", "end"]) {
+    const handle = $(`${key}-range-${endpoint}`);
+    handle.addEventListener("pointerdown", (event) => beginDrag(event, endpoint));
+    handle.addEventListener("keydown", (event) => {
+      if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End", "Escape"].includes(event.key)) return;
+      event.preventDefault();
+      const range = selectedRanges.get(key);
+      if (!range) return;
+      if (event.key === "Escape") { clearProgressRange(key); return; }
+      const step = event.shiftKey ? 1 : 0.1;
+      const next = event.key === "Home" ? 0 : event.key === "End" ? 100
+        : range[endpoint] + (["ArrowRight", "ArrowUp"].includes(event.key) ? step : -step);
+      moveEndpoint(endpoint, next);
+    });
+  }
 });
 document.addEventListener("pointerdown", (event) => {
   if (!event.target.closest(".progress-inspector")) {
