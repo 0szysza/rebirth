@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261002-18">
-  <script type="module" src="app.js?v=20261002-18"></script>
+  <link rel="stylesheet" href="styles.css?v=20261002-19">
+  <script type="module" src="app.js?v=20261002-19"></script>
 <link rel="canonical" href="https://0szysza.github.io/rebirth/">
 <meta name="description" content="Track your BGSI rebirth grind for up to three named accounts. Estimate a goal finish time or rebirths gained over a custom time interval, with saved inputs and your own pace.">
 <meta property="og:type" content="website">
@@ -79,6 +79,7 @@
         </div>
       </div>
       <div class="selector-controls">
+        <div class="time-controls">
         <div class="snapshot-row">
           <div class="snapshot-label"><svg class="icon" aria-hidden="true"><use href="#icon-clock"></use></svg><label for="snapshot">Counts recorded at</label><button class="help-tip" type="button" aria-label="About the recorded time" aria-describedby="snapshot-help">?<span class="help-tip__bubble" id="snapshot-help" role="tooltip">Enter the rebirth counts you had at this time. This saved starting point keeps your finish time fixed. Estimates assume you keep rebirthing at the entered pace.</span></button></div>
           <div class="field date-control">
@@ -87,6 +88,21 @@
             <div class="date-picker" id="snapshot-picker" role="dialog" aria-label="Recorded date and time" hidden></div>
           </div>
         </div>
+        <section class="interval-settings" id="interval-settings" aria-label="Time interval" hidden>
+          <div class="interval-duration" id="duration-fields">
+            <div class="field"><label for="interval-hours">Hours</label><input id="interval-hours" type="number" min="0" step="any" inputmode="decimal" value="2"></div>
+            <div class="field"><label for="interval-minutes">Minutes</label><input id="interval-minutes" type="number" min="0" max="59" step="1" inputmode="numeric" value="0"></div>
+          </div>
+          <div class="field interval-end-field" id="end-time-field" hidden>
+            <label for="interval-end">End date and time</label>
+            <div class="date-control">
+              <input id="interval-end" type="text" readonly aria-haspopup="dialog" aria-controls="interval-end-picker" aria-expanded="false" autocomplete="off">
+              <button class="date-control__open" type="button" data-date-for="interval-end" aria-label="Choose interval end date and time" aria-haspopup="dialog" aria-controls="interval-end-picker" aria-expanded="false"><svg class="icon" aria-hidden="true"><use href="#icon-calendar"></use></svg></button>
+              <div class="date-picker" id="interval-end-picker" role="dialog" aria-label="Interval end date and time" hidden></div>
+            </div>
+          </div>
+        </section>
+        </div>
         <div class="account-mode-field">
           <span class="account-mode-label" id="account-mode-label"><svg class="icon" aria-hidden="true"><use href="#icon-hash"></use></svg><span>Number of accounts</span></span>
           <div class="account-selector__buttons" role="group" aria-labelledby="account-mode-label">
@@ -94,21 +110,6 @@
             <button class="account-count is-active" type="button" data-count="2" aria-pressed="true">2 Accounts</button>
             <button class="account-count" type="button" data-count="3" aria-pressed="false">3 Accounts</button>
           </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="interval-settings" id="interval-settings" aria-label="Time interval" hidden>
-      <div class="interval-duration" id="duration-fields">
-        <div class="field"><label for="interval-hours">Hours</label><input id="interval-hours" type="number" min="0" step="any" inputmode="decimal" value="2"></div>
-        <div class="field"><label for="interval-minutes">Minutes</label><input id="interval-minutes" type="number" min="0" max="59" step="1" inputmode="numeric" value="0"></div>
-      </div>
-      <div class="field interval-end-field" id="end-time-field" hidden>
-        <label for="interval-end">End date and time</label>
-        <div class="date-control">
-          <input id="interval-end" type="text" readonly aria-haspopup="dialog" aria-controls="interval-end-picker" aria-expanded="false" autocomplete="off">
-          <button class="date-control__open" type="button" data-date-for="interval-end" aria-label="Choose interval end date and time" aria-haspopup="dialog" aria-controls="interval-end-picker" aria-expanded="false"><svg class="icon" aria-hidden="true"><use href="#icon-calendar"></use></svg></button>
-          <div class="date-picker" id="interval-end-picker" role="dialog" aria-label="Interval end date and time" hidden></div>
         </div>
       </div>
     </section>
