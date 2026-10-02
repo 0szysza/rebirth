@@ -14,6 +14,7 @@ const shortDateFormat = new Intl.DateTimeFormat("en-GB", { day: "numeric", month
 const accountCalculations = new Map();
 const previewPositions = new Map();
 let accountCount = 2;
+document.body.dataset.accountCount = String(accountCount);
 
 function accountMarkup(account) {
   const { key, name, detail, className, current, target, rebirths } = account;
@@ -144,7 +145,7 @@ function renderAccount(key, common) {
   const target = readNumber($(`${key}-target`));
   if (!Number.isFinite(current) || !Number.isFinite(target) || current < 0 || target < 0) {
     const blank = $(`${key}-current`).value.trim() === "" || $(`${key}-target`).value.trim() === "";
-    clearResult(key, "Enter the current count and target.", blank);
+    clearResult(key, blank ? "" : "Counts must be zero or greater.");
     return;
   }
   if (!common.snapshot || !common.forecast) {
@@ -153,7 +154,8 @@ function renderAccount(key, common) {
   }
   const pace = paceForAccount(key);
   if (pace.error) {
-    clearResult(key, pace.error, $(`${key}-rebirths`).value.trim() === "");
+    const blank = $(`${key}-rebirths`).value.trim() === "" || $(`${key}-minutes`).value.trim() === "";
+    clearResult(key, blank ? "" : pace.error);
     return;
   }
   const result = calculate({ current, target, ...pace, ...common });
@@ -232,6 +234,7 @@ document.addEventListener("pointerdown", (event) => {
 });
 document.querySelectorAll(".account-count").forEach((button) => button.addEventListener("click", () => {
   accountCount = Number(button.dataset.count);
+  document.body.dataset.accountCount = String(accountCount);
   $("accounts-grid").dataset.count = String(accountCount);
   document.querySelectorAll(".account-count").forEach((item) => {
     const active = item === button;
