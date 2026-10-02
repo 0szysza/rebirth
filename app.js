@@ -2,9 +2,9 @@ import { calculate } from "./calc.mjs?v=20261002-2";
 
 const $ = (id) => document.getElementById(id);
 const accounts = [
-  { key: "main", name: "Main", detail: "Primary account", className: "main", current: "8108", target: "9999", rebirths: "158" },
-  { key: "alt", name: "Alt 1", detail: "Alternate account", className: "alt", current: "1882", target: "7777", rebirths: "117" },
-  { key: "alt2", name: "Alt 2", detail: "Alternate account", className: "alt2", current: "", target: "", rebirths: "" },
+  { key: "main", name: "Main", className: "main", current: "8108", target: "9999", rebirths: "158" },
+  { key: "alt", name: "Alt 1", className: "alt", current: "1882", target: "7777", rebirths: "117" },
+  { key: "alt2", name: "Alt 2", className: "alt2", current: "", target: "", rebirths: "" },
 ];
 const numberFormat = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
 const percentFormat = new Intl.NumberFormat("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -17,12 +17,12 @@ let accountCount = 2;
 document.body.dataset.accountCount = String(accountCount);
 
 function accountMarkup(account) {
-  const { key, name, detail, className, current, target, rebirths } = account;
+  const { key, name, className, current, target, rebirths } = account;
   return `
     <section class="account-card account-card--${className}" data-account="${key}" aria-labelledby="${key}-title">
       <div class="account-card__head">
         <span class="account-card__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg></span>
-        <div><small>${detail}</small><h3 id="${key}-title">${name}</h3></div>
+        <h3 id="${key}-title">${name}</h3>
         <div class="account-card__quick"><span>ETA</span><strong id="${key}-quick-eta">—</strong></div>
       </div>
       <div class="account-card__fields">
@@ -92,12 +92,12 @@ function showProgressTooltip(key, rawPercent) {
   if (!data) return;
   const percent = Math.max(0, Math.min(100, Math.round(rawPercent * 10) / 10));
   const count = Math.round(data.target * percent / 100);
-  let pointTime = "Already reached";
-  if (count > data.current) {
+  let pointTime = formatDateTime(data.snapshot);
+  if (count !== data.current) {
     const timestamp = data.snapshot.getTime() + (count - data.current) * data.pace.minutes / data.pace.rebirths * 60000;
-    pointTime = data.pace.rebirths === 0 ? "No pace"
+    pointTime = data.pace.rebirths === 0 ? "No pace estimate"
       : Number.isFinite(timestamp) && Math.abs(timestamp) <= 8640000000000000
-        ? formatDateTime(new Date(timestamp)) : "Out of range";
+        ? `${count < data.current ? "≈ " : ""}${formatDateTime(new Date(timestamp))}` : "Out of range";
   }
   const goalTime = data.result.remaining === 0 ? "Goal reached"
     : data.result.eta ? formatDateTime(data.result.eta)
