@@ -27,3 +27,26 @@ export function restoreSnapshot(value, fallback = new Date()) {
   date.setSeconds(0, 0);
   return date;
 }
+
+export function calculateInterval({ current, rebirths, minutes, durationMinutes, snapshot = new Date(), now = new Date() }) {
+  if (![current, rebirths, minutes, durationMinutes].every(Number.isFinite)
+    || current < 0 || rebirths < 0 || minutes <= 0 || durationMinutes <= 0
+    || !Number.isFinite(snapshot?.getTime()) || !Number.isFinite(now?.getTime())) {
+    return { error: "Check the values." };
+  }
+  const duration = durationMinutes * 60000;
+  const endTime = snapshot.getTime() + duration;
+  const totalGain = durationMinutes * rebirths / minutes;
+  const finalCount = current + totalGain;
+  if (![duration, endTime, totalGain, finalCount].every(Number.isFinite) || Math.abs(endTime) > 8640000000000000) {
+    return { error: "The estimate is out of range." };
+  }
+  const elapsed = Math.min(duration, Math.max(0, now.getTime() - snapshot.getTime()));
+  const gained = elapsed / duration * totalGain;
+  return {
+    totalGain, finalCount, gained, projected: current + gained,
+    progress: elapsed / duration * 100,
+    activeDuration: Math.max(0, endTime - now.getTime()),
+    eta: new Date(endTime), reached: now.getTime() >= endTime,
+  };
+}

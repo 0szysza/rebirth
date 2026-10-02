@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { calculate, restoreSnapshot } from './calc.mjs';
+import { calculate, calculateInterval, restoreSnapshot } from './calc.mjs';
 
 const snapshot = new Date('2026-10-02T12:00:00Z');
 const values = { current: 100, target: 300, rebirths: 100, minutes: 60, snapshot };
@@ -48,4 +48,53 @@ test('older or malformed saved timestamps migrate once to a valid starting time'
     assert.equal(restoreSnapshot(value, snapshot).getTime(), snapshot.getTime());
   }
   assert.equal(calculate({ ...values, now: new Date(NaN) }).error, 'Check the values.');
+});
+
+const interval = { current: 1000, rebirths: 150, minutes: 10, durationMinutes: 120, snapshot };
+
+test('two-hour interval reports both gained rebirths and the final count', () => {
+  const result = calculateInterval({ ...interval, now: snapshot });
+  assert.equal(result.totalGain, 1800);
+  assert.equal(result.finalCount, 2800);
+  assert.equal(result.projected, 1000);
+  assert.equal(result.progress, 0);
+  assert.equal(result.eta.toISOString(), '2026-10-02T14:00:00.000Z');
+});
+
+test('returning later advances interval progress without moving its end', () => {
+  const result = calculateInterval({ ...interval, snapshot: restoreSnapshot(snapshot.toISOString()), now: new Date('2026-10-02T13:00:00Z') });
+  assert.equal(result.projected, 1900);
+  assert.equal(result.gained, 900);
+  assert.equal(result.progress, 50);
+  assert.equal(result.activeDuration, 3600000);
+  assert.equal(result.finalCount, 2800);
+  assert.equal(result.eta.toISOString(), '2026-10-02T14:00:00.000Z');
+});
+
+test('a finished interval stops counting at its fixed end', () => {
+  const result = calculateInterval({ ...interval, now: new Date('2026-10-02T17:00:00Z') });
+  assert.equal(result.projected, 2800);
+  assert.equal(result.gained, 1800);
+  assert.equal(result.progress, 100);
+  assert.equal(result.activeDuration, 0);
+  assert.equal(result.reached, true);
+});
+
+test('custom duration, zero pace and a future starting time remain meaningful', () => {
+  const custom = calculateInterval({ ...interval, durationMinutes: 375, now: snapshot });
+  assert.equal(custom.totalGain, 5625);
+  const paused = calculateInterval({ ...interval, rebirths: 0, now: new Date('2026-10-02T13:00:00Z') });
+  assert.equal(paused.finalCount, 1000);
+  assert.equal(paused.progress, 50);
+  const future = calculateInterval({ ...interval, now: new Date('2026-10-02T11:00:00Z') });
+  assert.equal(future.projected, 1000);
+  assert.equal(future.progress, 0);
+  assert.equal(future.activeDuration, 3 * 3600000);
+});
+
+test('invalid and unrepresentable intervals do not produce a forecast', () => {
+  for (const durationMinutes of [0, -1, NaN, Infinity, Number.MAX_VALUE]) {
+    assert.ok(calculateInterval({ ...interval, durationMinutes, now: snapshot }).error);
+  }
+  assert.ok(calculateInterval({ ...interval, snapshot: new Date(NaN) }).error);
 });

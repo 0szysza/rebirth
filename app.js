@@ -1,4 +1,4 @@
-import { calculate, restoreSnapshot } from "./calc.mjs?v=20261002-5";
+import { calculate, calculateInterval, restoreSnapshot } from "./calc.mjs?v=20261002-6";
 
 const $ = (id) => document.getElementById(id);
 const accounts = [
@@ -18,6 +18,8 @@ const calendarDayFormat = new Intl.DateTimeFormat("en-GB", { weekday: "long", da
 const accountCalculations = new Map();
 const previewPositions = new Map();
 let accountCount = 2;
+let calculatorMode = "goal";
+let modeStates = {};
 document.body.dataset.accountCount = String(accountCount);
 
 function accountMarkup(account) {
@@ -38,11 +40,11 @@ function accountMarkup(account) {
             <button type="button" class="account-name__action account-name__reset" aria-label="Reset account name" title="Reset name" hidden><svg class="icon" aria-hidden="true"><use href="#icon-pen-off"></use></svg></button>
           </form>
         </div>
-        <div class="account-card__quick"><span>ETA</span><strong id="${key}-quick-eta">—</strong></div>
+        <div class="account-card__quick"><span id="${key}-quick-label">ETA</span><strong id="${key}-quick-eta">—</strong></div>
       </div>
       <div class="account-card__fields">
         <div class="field"><label for="${key}-current">Starting rebirths</label><input id="${key}-current" type="number" min="0" step="1" inputmode="numeric" value="${current}"></div>
-        <div class="field"><label for="${key}-target">Target rebirths</label><input id="${key}-target" type="number" min="0" step="1" inputmode="numeric" value="${target}"></div>
+        <div class="field target-field"><label for="${key}-target">Target rebirths</label><input id="${key}-target" type="number" min="0" step="1" inputmode="numeric" value="${target}"></div>
       </div>
       <fieldset class="pace-group" aria-label="Rebirth pace"><div class="pace-fields">
         <div class="field"><label for="${key}-rebirths">Rebirths</label><input id="${key}-rebirths" type="number" min="0" step="any" inputmode="decimal" value="${rebirths}"></div>
@@ -50,19 +52,20 @@ function accountMarkup(account) {
         <div class="field"><label for="${key}-minutes">Minutes</label><input id="${key}-minutes" type="number" min="0.01" step="any" inputmode="decimal" value="10"></div>
       </div></fieldset>
       <div class="account-card__results" aria-live="polite">
-        <div class="progress-line"><span>Estimated progress</span><strong id="${key}-progress-text">—</strong></div>
+        <div class="progress-line"><span id="${key}-progress-label">Estimated progress</span><strong id="${key}-progress-text">—</strong></div>
         <div class="progress-inspector">
           <div class="progress-track" role="progressbar" tabindex="0" aria-label="${name} progress" aria-description="Hover, tap, or use arrow keys to inspect a point" aria-describedby="${key}-progress-tooltip" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="${key}-progress-bar"></span></div>
           <span class="progress-hover-marker" id="${key}-progress-marker" hidden aria-hidden="true"></span>
           <div class="progress-tooltip" id="${key}-progress-tooltip" role="tooltip" aria-live="off" hidden>
             <div class="progress-tooltip__head"><strong id="${key}-hover-percent">—</strong><span id="${key}-hover-count">—</span></div>
             <div class="progress-tooltip__row"><span>At this point</span><strong id="${key}-hover-time">—</strong></div>
-            <div class="progress-tooltip__row"><span>Estimated finish</span><strong id="${key}-hover-finish">—</strong></div>
+            <div class="progress-tooltip__row interval-gain" hidden><span>Rebirths gained</span><strong id="${key}-hover-gain">—</strong></div>
+            <div class="progress-tooltip__row"><span id="${key}-hover-finish-label">Estimated finish</span><strong id="${key}-hover-finish">—</strong></div>
           </div>
         </div>
         <div class="eta-block"><span id="${key}-eta-label">Estimated finish</span><strong id="${key}-eta">—</strong><small id="${key}-eta-date">—</small></div>
         <div class="stat-grid">
-          <div class="stat"><span>Remaining</span><strong id="${key}-remaining">—</strong></div>
+          <div class="stat"><span id="${key}-remaining-label">Remaining</span><strong id="${key}-remaining">—</strong></div>
           <div class="stat"><span>Time left</span><strong id="${key}-duration">—</strong></div>
           <div class="stat stat--wide"><span>Estimated now</span><strong id="${key}-projected">—</strong></div>
         </div>
@@ -71,8 +74,8 @@ function accountMarkup(account) {
     </section>`;
 }
 
-function setDateValue(id, date) {
-  date = restoreSnapshot(date.toISOString());
+function setDateValue(id, date, precise = false) {
+  date = precise ? new Date(date) : restoreSnapshot(date.toISOString());
   $(id).dataset.value = date.toISOString();
   $(id).value = dateInputFormat.format(date);
 }
@@ -101,8 +104,8 @@ function paceForAccount(key) {
   return { rebirths, minutes };
 }
 
-function formatDateTime(date) {
-  const rounded = new Date(Math.round(date.getTime() / 60000) * 60000);
+function formatDateTime(date, round = true) {
+  const rounded = round ? new Date(Math.round(date.getTime() / 60000) * 60000) : date;
   return `${shortDateFormat.format(rounded)}, ${timeFormat.format(rounded)}`;
 }
 
@@ -116,15 +119,18 @@ function showProgressTooltip(key, rawPercent) {
   const data = accountCalculations.get(key);
   if (!data) return;
   const percent = Math.max(0, Math.min(100, Math.round(rawPercent * 10) / 10));
-  const count = Math.round(data.target * percent / 100);
+  const count = data.mode === "interval" ? Math.floor(data.current + data.result.totalGain * percent / 100) : Math.round(data.target * percent / 100);
   let pointTime = formatDateTime(data.snapshot);
-  if (count !== data.current) {
+  if (data.mode === "interval") {
+    pointTime = formatDateTime(new Date(data.snapshot.getTime() + data.durationMinutes * 60000 * percent / 100), false);
+    $(`${key}-hover-gain`).textContent = `≈ ${numberFormat.format(Math.floor(data.result.totalGain * percent / 100))}`;
+  } else if (count !== data.current) {
     const timestamp = data.snapshot.getTime() + (count - data.current) * data.pace.minutes / data.pace.rebirths * 60000;
     pointTime = data.pace.rebirths === 0 ? "No pace estimate"
       : Number.isFinite(timestamp) && Math.abs(timestamp) <= 8640000000000000
         ? `${count < data.current ? "≈ " : ""}${formatDateTime(new Date(timestamp))}` : "Out of range";
   }
-  const goalTime = data.result.eta ? formatDateTime(data.result.eta)
+  const goalTime = data.result.eta ? formatDateTime(data.result.eta, data.mode !== "interval")
       : data.pace.rebirths === 0 ? "No pace" : "Out of range";
   $(`${key}-hover-percent`).textContent = `${percentFormat.format(percent)}%`;
   $(`${key}-hover-count`).textContent = `${numberFormat.format(count)} rebirths`;
@@ -147,7 +153,7 @@ function clearResult(key, message, neutral = false) {
   accountCalculations.delete(key);
   hideProgressTooltip(key);
   for (const id of ["progress-text", "eta", "eta-date", "remaining", "duration", "projected"]) $(`${key}-${id}`).textContent = "—";
-  $(`${key}-eta-label`).textContent = "Estimated finish";
+  $(`${key}-eta-label`).textContent = calculatorMode === "interval" ? "Rebirths at interval end" : "Estimated finish";
   $(`${key}-quick-eta`).textContent = "—";
   $(`${key}-progress-bar`).style.width = "0%";
   $(`${key}-progress-bar`).parentElement.setAttribute("aria-valuenow", "0");
@@ -159,8 +165,9 @@ function clearResult(key, message, neutral = false) {
 function renderAccount(key, common) {
   const current = readNumber($(`${key}-current`));
   const target = readNumber($(`${key}-target`));
-  if (!Number.isFinite(current) || !Number.isFinite(target) || current < 0 || target < 0) {
-    const blank = $(`${key}-current`).value.trim() === "" || $(`${key}-target`).value.trim() === "";
+  const isInterval = calculatorMode === "interval";
+  if (!Number.isFinite(current) || current < 0 || (!isInterval && (!Number.isFinite(target) || target < 0))) {
+    const blank = $(`${key}-current`).value.trim() === "" || (!isInterval && $(`${key}-target`).value.trim() === "");
     clearResult(key, blank ? "" : "Counts must be zero or greater.");
     return;
   }
@@ -170,20 +177,31 @@ function renderAccount(key, common) {
     clearResult(key, blank ? "" : pace.error);
     return;
   }
-  const result = calculate({ current, target, ...pace, ...common });
+  if (isInterval && common.intervalError) {
+    clearResult(key, common.intervalError);
+    return;
+  }
+  const result = (isInterval ? calculateInterval : calculate)({ current, target, ...pace, ...common });
   if (result.error) {
     clearResult(key, result.error);
     return;
   }
-  accountCalculations.set(key, { current, target, pace, snapshot: common.snapshot, result });
+  accountCalculations.set(key, { mode: calculatorMode, current, target, pace, snapshot: common.snapshot, durationMinutes: common.durationMinutes, result });
   $(`${key}-progress-text`).textContent = `${percentFormat.format(result.progress)}%`;
   $(`${key}-progress-bar`).style.width = `${result.progress}%`;
   $(`${key}-progress-bar`).parentElement.setAttribute("aria-valuenow", result.progress.toFixed(1));
-  $(`${key}-progress-bar`).parentElement.setAttribute("aria-valuetext", `Estimated ${percentFormat.format(result.progress)}%, ${numberFormat.format(Math.floor(result.projected))} of ${numberFormat.format(target)} rebirths`);
-  $(`${key}-remaining`).textContent = numberFormat.format(Math.ceil(result.remaining));
+  $(`${key}-progress-bar`).parentElement.setAttribute("aria-valuetext", isInterval
+    ? `${percentFormat.format(result.progress)}% of the interval elapsed, estimated ${numberFormat.format(Math.floor(result.projected))} rebirths now`
+    : `Estimated ${percentFormat.format(result.progress)}%, ${numberFormat.format(Math.floor(result.projected))} of ${numberFormat.format(target)} rebirths`);
+  $(`${key}-remaining`).textContent = isInterval ? `≈ ${numberFormat.format(Math.floor(result.totalGain))}` : numberFormat.format(Math.ceil(result.remaining));
   $(`${key}-projected`).textContent = `≈ ${numberFormat.format(Math.floor(result.projected))} rebirths`;
   $(`${key}-duration`).textContent = formatDuration(result.activeDuration);
-  if (result.eta) {
+  if (isInterval) {
+    $(`${key}-eta-label`).textContent = "Rebirths at interval end";
+    $(`${key}-eta`).textContent = `≈ ${numberFormat.format(Math.floor(result.finalCount))}`;
+    $(`${key}-eta-date`).textContent = `${result.reached ? "Ended" : "Ends"} ${formatDateTime(result.eta, false)}`;
+    $(`${key}-quick-eta`).textContent = result.reached ? "Done" : timeFormat.format(result.eta);
+  } else if (result.eta) {
     const displayedEta = new Date(Math.round(result.eta.getTime() / 60000) * 60000);
     $(`${key}-eta-label`).textContent = result.reached ? "Estimated target reached" : "Estimated finish";
     $(`${key}-eta`).textContent = timeFormat.format(displayedEta);
@@ -202,6 +220,17 @@ function renderAccount(key, common) {
 
 function render() {
   const common = { snapshot: readDate($("snapshot")), now: new Date() };
+  if (calculatorMode === "interval") {
+    const hours = readNumber($("interval-hours"));
+    const minutes = readNumber($("interval-minutes"));
+    common.durationMinutes = hours * 60 + minutes;
+    if (!Number.isFinite(hours) || hours < 0 || !Number.isInteger(minutes) || minutes < 0 || minutes > 59 || !Number.isFinite(common.durationMinutes) || common.durationMinutes <= 0) {
+      common.intervalError = "Enter a duration above zero (minutes: 0–59).";
+    }
+    document.querySelectorAll("[data-hours]").forEach(button => {
+      button.setAttribute("aria-pressed", String(hours === Number(button.dataset.hours) && minutes === 0));
+    });
+  }
   for (const [index, account] of accounts.entries()) {
     const card = document.querySelector(`[data-account="${account.key}"]`);
     card.hidden = index >= accountCount;
@@ -427,6 +456,7 @@ document.addEventListener("keydown", (event) => {
 
 $("accounts-grid").innerHTML = accounts.map(accountMarkup).join("");
 initNumberControls($("accounts-grid"));
+initNumberControls($("interval-settings"));
 function defaultAccountName(account) {
   return `Account ${accounts.indexOf(account) + 1}`;
 }
@@ -538,17 +568,88 @@ const storageKey = "rebirth-calculator:v1";
 const accountFields = ["current", "target", "rebirths", "minutes"];
 
 function saveState() {
+  modeStates[calculatorMode] = captureModeState();
+  const goal = modeStates.goal || modeStates[calculatorMode];
   const state = {
     accountCount,
-    snapshot: $("snapshot").dataset.value,
+    calculatorMode,
+    modes: modeStates,
+    snapshot: goal.snapshot,
     accounts: Object.fromEntries(accounts.map(({ key, name }) => [key,
-      { name, ...Object.fromEntries(accountFields.map((field) => [field, $(`${key}-${field}`).value])) }])),
+      { name, ...goal.accounts[key] }])),
   };
   try {
     localStorage.setItem(storageKey, JSON.stringify(state));
   } catch {
     // The calculator still works when browser storage is unavailable.
   }
+}
+
+function captureModeState() {
+  return {
+    snapshot: $("snapshot").dataset.value,
+    hours: $("interval-hours").value,
+    minutes: $("interval-minutes").value,
+    accounts: Object.fromEntries(accounts.map(({key}) => [key,
+      Object.fromEntries(accountFields.map(field => [field, $(`${key}-${field}`).value]))])),
+  };
+}
+
+function applyModeState(state) {
+  const saved = new Date(state.snapshot);
+  setDateValue("snapshot", calculatorMode === "interval" && Number.isFinite(saved.getTime()) ? saved : restoreSnapshot(state.snapshot), calculatorMode === "interval");
+  for (const [id, field, fallback] of [["interval-hours", "hours", "2"], ["interval-minutes", "minutes", "0"]]) {
+    $(id).value = typeof state[field] === "string" && state[field].length <= 100 ? state[field] : fallback;
+  }
+  for (const {key} of accounts) {
+    for (const field of accountFields) {
+      const value = state.accounts?.[key]?.[field];
+      if (typeof value === "string" && value.length <= 100) $(`${key}-${field}`).value = value;
+    }
+  }
+}
+
+function syncCalculatorMode() {
+  const isInterval = calculatorMode === "interval";
+  document.body.dataset.calculatorMode = calculatorMode;
+  $("interval-settings").hidden = !isInterval;
+  $("calculator-description").textContent = isInterval
+    ? "Set your starting rebirths and pace to see how much each account gains over time."
+    : "Set your rebirth counts and pace to see when each account reaches its goal.";
+  document.querySelector('label[for="snapshot"]').textContent = isInterval ? "Interval starts at" : "Counts recorded at";
+  $("snapshot-help").textContent = isInterval
+    ? "Enter the counts you had at this starting time. The interval keeps the same end when you return. Use Start now when entering fresh counts."
+    : "Enter the rebirth counts you had at this time. This saved starting point keeps your finish time fixed. Estimates assume you keep rebirthing at the entered pace.";
+  $("snapshot-picker").setAttribute("aria-label", isInterval ? "Interval start date and time" : "Recorded date and time");
+  document.querySelector('[data-date-for="snapshot"]').setAttribute("aria-label", isInterval ? "Choose interval start date and time" : "Choose recorded date and time");
+  document.querySelectorAll(".calculation-mode").forEach(button => {
+    const active = button.dataset.mode === calculatorMode;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+  for (const {key} of accounts) {
+    const card = document.querySelector(`[data-account="${key}"]`);
+    card.querySelector(".target-field").hidden = isInterval;
+    card.querySelector(".interval-gain").hidden = !isInterval;
+    $(`${key}-quick-label`).textContent = isInterval ? "ENDS" : "ETA";
+    $(`${key}-progress-label`).textContent = isInterval ? "Interval progress" : "Estimated progress";
+    $(`${key}-remaining-label`).textContent = isInterval ? "Rebirths gained" : "Remaining";
+    $(`${key}-hover-finish-label`).textContent = isInterval ? "Interval ends" : "Estimated finish";
+    hideProgressTooltip(key);
+  }
+}
+
+function setCalculatorMode(mode) {
+  if (!["goal", "interval"].includes(mode) || mode === calculatorMode) return;
+  saveState();
+  closeDatePicker();
+  accounts.forEach(account => closeAccountNameEditor(account, false, false));
+  if (!modeStates[mode]) modeStates[mode] = { ...captureModeState(), snapshot: new Date().toISOString() };
+  calculatorMode = mode;
+  applyModeState(modeStates[mode]);
+  syncCalculatorMode();
+  render();
+  saveState();
 }
 
 function restoreState() {
@@ -560,15 +661,15 @@ function restoreState() {
   }
   if (!state || typeof state !== "object") return;
   if ([1, 2, 3].includes(state.accountCount)) accountCount = state.accountCount;
-  setDateValue("snapshot", restoreSnapshot(state.snapshot, readDate($("snapshot"))));
   for (const account of accounts) {
-    const { key } = account;
-    setAccountName(account, state.accounts?.[key]?.name);
-    for (const field of accountFields) {
-      const value = state.accounts?.[key]?.[field];
-      if (typeof value === "string" && value.length <= 100) $(`${key}-${field}`).value = value;
-    }
+    setAccountName(account, state.accounts?.[account.key]?.name);
   }
+  modeStates.goal = { ...captureModeState(), snapshot: restoreSnapshot(state.snapshot, readDate($("snapshot"))).toISOString(), accounts: state.accounts || captureModeState().accounts };
+  for (const mode of ["goal", "interval"]) {
+    if (state.modes?.[mode] && typeof state.modes[mode] === "object") modeStates[mode] = state.modes[mode];
+  }
+  calculatorMode = state.calculatorMode === "interval" && modeStates.interval ? "interval" : "goal";
+  applyModeState(modeStates[calculatorMode]);
 }
 
 function setAccountCount(count, persist = true) {
@@ -576,7 +677,7 @@ function setAccountCount(count, persist = true) {
   accounts.slice(count).forEach((account) => closeAccountNameEditor(account, false, false));
   document.body.dataset.accountCount = String(accountCount);
   $("accounts-grid").dataset.count = String(accountCount);
-  document.querySelectorAll(".account-count").forEach((item) => {
+  document.querySelectorAll(".account-count[data-count]").forEach((item) => {
     const active = Number(item.dataset.count) === accountCount;
     item.classList.toggle("is-active", active);
     item.setAttribute("aria-pressed", String(active));
@@ -585,12 +686,24 @@ function setAccountCount(count, persist = true) {
   if (persist) saveState();
 }
 
-document.querySelectorAll(".account-count").forEach((button) => button.addEventListener("click", () => setAccountCount(Number(button.dataset.count))));
+document.querySelectorAll(".account-count[data-count]").forEach((button) => button.addEventListener("click", () => setAccountCount(Number(button.dataset.count))));
+document.querySelectorAll(".calculation-mode").forEach(button => button.addEventListener("click", () => setCalculatorMode(button.dataset.mode)));
+document.querySelectorAll("[data-hours]").forEach(button => button.addEventListener("click", () => {
+  $("interval-hours").value = button.dataset.hours;
+  $("interval-minutes").value = "0";
+  render(); saveState();
+}));
+$("interval-start-now").addEventListener("click", () => {
+  closeDatePicker();
+  setDateValue("snapshot", new Date(), true);
+  render(); saveState();
+});
 setDateValue("snapshot", new Date());
 restoreState();
+syncCalculatorMode();
 // Persist the initial timestamp once, including migration from older saved inputs.
 saveState();
-document.querySelectorAll('#accounts-grid input[type="number"]').forEach((input) => {
+document.querySelectorAll('#accounts-grid input[type="number"], #interval-settings input[type="number"]').forEach((input) => {
   const update = () => { render(); saveState(); };
   input.addEventListener("input", update);
   input.addEventListener("change", update);
