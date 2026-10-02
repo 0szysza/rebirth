@@ -371,6 +371,7 @@ document.addEventListener("click", (event) => {
     setDateValue(id, pickerState.draft);
     closeDatePicker(true);
     render();
+    saveState();
     return;
   }
   if (action === "now") {
@@ -447,24 +448,69 @@ document.addEventListener("pointerdown", (event) => {
     for (const account of accounts) hideProgressTooltip(account.key);
   }
 });
-document.querySelectorAll(".account-count").forEach((button) => button.addEventListener("click", () => {
-  accountCount = Number(button.dataset.count);
+const storageKey = "rebirth-calculator:v1";
+const accountFields = ["current", "target", "rebirths", "minutes"];
+
+function saveState() {
+  const state = {
+    accountCount,
+    snapshot: $("snapshot").dataset.value,
+    forecast: $("forecast").dataset.value,
+    accounts: Object.fromEntries(accounts.map(({ key }) => [key,
+      Object.fromEntries(accountFields.map((field) => [field, $(`${key}-${field}`).value]))])),
+  };
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(state));
+  } catch {
+    // The calculator still works when browser storage is unavailable.
+  }
+}
+
+function restoreState() {
+  let state;
+  try {
+    state = JSON.parse(localStorage.getItem(storageKey) || "null");
+  } catch {
+    return;
+  }
+  if (!state || typeof state !== "object") return;
+  if ([1, 2, 3].includes(state.accountCount)) accountCount = state.accountCount;
+  for (const id of ["snapshot", "forecast"]) {
+    if (typeof state[id] !== "string") continue;
+    const date = new Date(state[id]);
+    if (Number.isFinite(date.getTime())) setDateValue(id, date);
+  }
+  for (const { key } of accounts) {
+    for (const field of accountFields) {
+      const value = state.accounts?.[key]?.[field];
+      if (typeof value === "string" && value.length <= 100) $(`${key}-${field}`).value = value;
+    }
+  }
+}
+
+function setAccountCount(count, persist = true) {
+  accountCount = count;
   document.body.dataset.accountCount = String(accountCount);
   $("accounts-grid").dataset.count = String(accountCount);
   document.querySelectorAll(".account-count").forEach((item) => {
-    const active = item === button;
+    const active = Number(item.dataset.count) === accountCount;
     item.classList.toggle("is-active", active);
     item.setAttribute("aria-pressed", String(active));
   });
   render();
-}));
+  if (persist) saveState();
+}
+
+document.querySelectorAll(".account-count").forEach((button) => button.addEventListener("click", () => setAccountCount(Number(button.dataset.count))));
 const now = new Date();
 now.setSeconds(0, 0);
 setDateValue("snapshot", now);
 setDateValue("forecast", new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1));
+restoreState();
 document.querySelectorAll("#accounts-grid input").forEach((input) => {
-  input.addEventListener("input", render);
-  input.addEventListener("change", render);
+  const update = () => { render(); saveState(); };
+  input.addEventListener("input", update);
+  input.addEventListener("change", update);
 });
 const toolMenu = document.querySelector(".tool-menu");
 document.addEventListener("pointerdown", (event) => {
@@ -476,4 +522,4 @@ toolMenu.addEventListener("keydown", (event) => {
     toolMenu.querySelector("summary").focus();
   }
 });
-render();
+setAccountCount(accountCount, false);
