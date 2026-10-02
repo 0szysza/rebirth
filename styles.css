@@ -164,7 +164,8 @@ h1,h2,h3,p{margin:0}
 @media(max-width:430px){.account-card{padding:16px}.field input{font-size:13px}.tool-menu summary{padding:0 9px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
 
-.snapshot-row{position:relative;z-index:6;display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.selector-controls{display:flex;align-items:flex-end;gap:14px;margin-left:auto}
+.snapshot-row{position:relative;z-index:6;display:flex;flex-direction:column;align-items:flex-start;gap:7px;margin:0}
 .snapshot-label{position:relative;display:flex;align-items:center;gap:7px;color:#94a3b8;font-size:12px;font-weight:600}
 .snapshot-label>.icon{width:16px;height:16px;color:#5CDDFA}
 .snapshot-row>.date-control{width:270px}
@@ -181,4 +182,5 @@ h1,h2,h3,p{margin:0}
 .date-picker__footer button:disabled{opacity:.4;cursor:default}
 .stat--wide{grid-column:1/-1}
 .stat--wide strong{color:var(--accent)}
-@media(max-width:680px){.snapshot-row{flex-direction:column;align-items:stretch;gap:8px}.snapshot-row>.date-control{width:100%}.snapshot-row input{height:42px;font-size:16px}}
+@media(max-width:900px){.account-selector{flex-direction:column;align-items:flex-start;gap:12px}.selector-controls{width:100%;justify-content:space-between;margin-left:0}}
+@media(max-width:680px){.selector-controls{flex-direction:column-reverse;align-items:stretch;gap:14px}.snapshot-row{align-items:stretch;gap:8px}.snapshot-row>.date-control{width:100%}.snapshot-row input{height:42px;font-size:16px}}

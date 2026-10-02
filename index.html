@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261002-5">
+  <link rel="stylesheet" href="styles.css?v=20261002-6">
   <script type="module" src="app.js?v=20261002-5"></script>
 </head>
 <body>
@@ -47,13 +47,7 @@
   <main class="page-shell">
     <section class="account-selector" aria-labelledby="account-selector-title">
       <div class="selector-heading"><svg class="icon" aria-hidden="true"><use href="#icon-users"></use></svg><h1 id="account-selector-title">Accounts</h1></div>
-      <div class="account-selector__buttons" role="group" aria-label="Number of accounts">
-        <button class="account-count" type="button" data-count="1" aria-pressed="false">1 Account</button>
-        <button class="account-count is-active" type="button" data-count="2" aria-pressed="true">2 Accounts</button>
-        <button class="account-count" type="button" data-count="3" aria-pressed="false">3 Accounts</button>
-      </div>
-    </section>
-
+      <div class="selector-controls">
     <div class="snapshot-row">
       <div class="snapshot-label"><svg class="icon" aria-hidden="true"><use href="#icon-clock"></use></svg><label for="snapshot">Counts recorded at</label><button class="help-tip" type="button" aria-label="About the recorded time" aria-describedby="snapshot-help">?<span class="help-tip__bubble" id="snapshot-help" role="tooltip">Enter the rebirth counts you had at this time. This saved starting point keeps your finish time fixed. Estimates assume you keep rebirthing at the entered pace.</span></button></div>
       <div class="field date-control">
@@ -62,6 +56,13 @@
         <div class="date-picker" id="snapshot-picker" role="dialog" aria-label="Recorded date and time" hidden></div>
       </div>
     </div>
+      <div class="account-selector__buttons" role="group" aria-label="Number of accounts">
+        <button class="account-count" type="button" data-count="1" aria-pressed="false">1 Account</button>
+        <button class="account-count is-active" type="button" data-count="2" aria-pressed="true">2 Accounts</button>
+        <button class="account-count" type="button" data-count="3" aria-pressed="false">3 Accounts</button>
+      </div>
+      </div>
+    </section>
 
     <div class="accounts-grid" id="accounts-grid" role="group" aria-label="Account estimates" data-count="2"></div>
   </main>
