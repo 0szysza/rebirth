@@ -1,7 +1,5 @@
 # BGSI Rebirth Calculator
 
-[![BGSI Rebirth Calculator — accounts, pace and finish times](assets/social/cover.png)](https://0szysza.github.io/rebirth/)
-
 Track your rebirth grind with saved starting counts, your own pace and a fixed estimated finish time.
 
 **[Open the calculator](https://0szysza.github.io/rebirth/)** · [CCU Tracker](https://0szysza.github.io/trackccu/) · [Tool hub](https://0szysza.github.io/)
@@ -52,40 +50,6 @@ These are estimates at a constant pace. The calculator does not read Roblox acco
 ## Saving and privacy
 
 Inputs are stored in the browser’s `localStorage` under `rebirth-calculator:v1`. Calculator values are not submitted to a server. Clearing site storage removes them; another browser/device has separate values. The initial first and second accounts are editable examples, while the third begins empty.
-
-## Development
-
-No framework, package installation or build step is required. Serve the files over HTTP so the JavaScript module loads:
-
-~~~sh
-python -m http.server 8000
-~~~
-
-Open [localhost:8000](http://localhost:8000/).
-
-Run the calculation checks with Node.js:
-
-~~~sh
-node --test calc.test.mjs
-~~~
-
-| File | Purpose |
-| --- | --- |
-| `index.html` | Header, account-mode/time controls, SVG symbols, footer and sharing metadata. |
-| `app.js` | Account rendering, name editing, custom calendar, step buttons, point inspection and saved state. |
-| `calc.mjs` | Estimate calculations and recorded-time restoration. |
-| `calc.test.mjs` | Checks for fixed finish times, reopening, completed goals and zero pace. |
-| `styles.css` | Desktop/mobile styling and account accents. |
-| `favicon.svg` | Rebirth logo. |
-| `assets/social/` | Share-card image and editable HTML artwork. |
-
-## Deployment and sharing
-
-GitHub Pages publishes the static files from `main` through the repository’s existing workflow. No application backend is needed.
-
-Open Graph and Twitter Card tags in `index.html` provide the title, description and absolute PNG image URL. To update the cover, edit `assets/social/card.html`, capture it at 1200 × 630, replace `cover.png` and update its metadata version. Discord and other platforms may retain cached previews.
-
-## Related tools
 
 - [CCU Tracker](https://0szysza.github.io/trackccu/) — Roblox games, groups and historical charts.
 - [Tool hub](https://0szysza.github.io/) — both tools in one place.
