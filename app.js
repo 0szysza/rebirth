@@ -333,7 +333,6 @@ function renderDatePicker() {
     <div class="date-picker__weekdays" aria-hidden="true"><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span></div>
     <div class="date-picker__days" role="group" aria-label="Choose a day">${cells.join("")}</div>
     <div class="date-picker__time">
-      <div class="date-picker__time-title"><svg class="icon" aria-hidden="true"><use href="#icon-clock"></use></svg><span>Time</span></div>
       <div class="date-picker__time-fields">
         <div class="field"><label for="${openId}-hour">Hour</label><input id="${openId}-hour" type="number" min="0" max="23" step="1" value="${twoDigits(draft.getHours())}" data-time-unit="hour" data-step-label="hour" data-wrap="true" data-pad="2" inputmode="numeric"></div>
         <span class="date-picker__time-colon" aria-hidden="true">:</span>

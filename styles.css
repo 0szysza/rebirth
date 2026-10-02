@@ -99,8 +99,6 @@ body[data-calculator-mode=interval] .eta-block strong{overflow-wrap:anywhere}
 .date-picker__day.is-today:not(.is-selected){border-color:#546480;color:#5CDDFA}
 .date-picker__day.is-selected{border-color:#5CDDFA;background:#24475b;color:#91efff}
 .date-picker__time{display:flex;flex-direction:column;align-items:stretch;gap:9px;margin-top:11px;padding-top:12px;border-top:1px solid #303a55}
-.date-picker__time-title{display:flex;align-items:center;gap:6px;color:#a8b5c9;font-size:12px;font-weight:700}
-.date-picker__time-title .icon{width:15px;height:15px;color:#5CDDFA}
 .date-picker__time-fields{display:grid;grid-template-columns:1fr auto 1fr;align-items:end;gap:9px}
 .date-picker__time-fields .field label{margin-bottom:5px;font-size:11px}
 .date-picker__time-fields .field input{height:35px;padding-left:8px;font-size:12px}
