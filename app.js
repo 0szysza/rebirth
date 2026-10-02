@@ -29,13 +29,14 @@ function accountMarkup(account) {
         <div class="account-card__quick"><span>ETA</span><strong id="${key}-quick-eta">—</strong></div>
       </div>
       <div class="account-card__fields">
-        <div class="field"><label for="${key}-current">Rebirths at recorded time</label><input id="${key}-current" type="number" min="0" step="1" inputmode="numeric" value="${current}"></div>
+        <div class="field"><label for="${key}-current">Starting rebirths</label><input id="${key}-current" type="number" min="0" step="1" inputmode="numeric" value="${current}"></div>
         <div class="field"><label for="${key}-target">Target rebirths</label><input id="${key}-target" type="number" min="0" step="1" inputmode="numeric" value="${target}"></div>
       </div>
-      <fieldset class="pace-group" aria-label="Rebirth pace"><div class="pace-fields">
-        <div class="field"><label for="${key}-rebirths">Rebirths</label><input id="${key}-rebirths" type="number" min="0" step="any" inputmode="decimal" value="${rebirths}"></div>
-        <span class="pace-fields__per" aria-hidden="true">per</span>
-        <div class="field"><label for="${key}-minutes">Minutes</label><input id="${key}-minutes" type="number" min="0.01" step="any" inputmode="decimal" value="10"></div>
+      <fieldset class="pace-group"><legend>Rebirth pace</legend><div class="pace-fields">
+        <div class="field"><label class="sr-only" for="${key}-rebirths">Rebirths</label><input id="${key}-rebirths" type="number" min="0" step="any" inputmode="decimal" value="${rebirths}"></div>
+        <span class="pace-fields__per" aria-hidden="true">rebirths every</span>
+        <div class="field"><label class="sr-only" for="${key}-minutes">Minutes</label><input id="${key}-minutes" type="number" min="0.01" step="any" inputmode="decimal" value="10"></div>
+        <span class="pace-fields__unit" aria-hidden="true">min</span>
       </div></fieldset>
       <div class="account-card__results" aria-live="polite">
         <div class="progress-line"><span>Estimated progress</span><strong id="${key}-progress-text">—</strong></div>
