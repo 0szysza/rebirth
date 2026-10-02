@@ -60,8 +60,6 @@ h1,h2,h3,p{margin:0}
 .interval-duration{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:220px}
 .interval-end-field{width:230px}
 .interval-settings .field label{min-height:16px;margin-bottom:7px;line-height:16px}
-.interval-settings .field .time-unit-label{display:flex;align-items:center;gap:6px}
-.time-unit-label .icon{width:16px;height:16px;color:#5CDDFA;fill:currentColor;stroke:none}
 body[data-calculator-mode=interval] .account-card__fields{grid-template-columns:1fr}
 body[data-calculator-mode=interval] .eta-block strong{overflow-wrap:anywhere}
 @media(max-width:680px){.calculation-modes{display:flex;width:100%}.calculation-mode{flex:1;min-width:0;padding-inline:8px;white-space:nowrap}.interval-settings{display:grid;grid-template-columns:1fr;width:100%}.interval-duration,.interval-end-field{width:100%}}
