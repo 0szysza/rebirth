@@ -1,5 +1,15 @@
 import { calculate, calculateInterval, restoreSnapshot } from "./calc.mjs?v=20261002-7";
 
+import { parseAmount, formatAmount, stepAmount } from "./amounts.mjs?v=20261004-1";
+
+const isBubble = document.body.dataset.stat === "bubble";
+const statUnit = isBubble ? "bubbles" : "rebirths";
+const statLabel = isBubble ? "Bubbles" : "Rebirths";
+const countNoun = isBubble ? "bubble" : "rebirth";
+const paceLabel = isBubble ? "Bubble" : "Rebirth";
+const amountFormat = { format: value => isBubble ? formatAmount(value) : numberFormat.format(value) };
+const amountInput = (id, value, step = "1") => `<input id="${id}" data-stat-amount type="${isBubble ? "text" : "number"}" min="0" step="${step}" inputmode="${isBubble ? "text" : step === "1" ? "numeric" : "decimal"}" autocomplete="off" ${isBubble ? 'aria-describedby="amount-help" placeholder="e.g. 1.5B"' : ""} value="${value}">`;
+
 const $ = (id) => document.getElementById(id);
 const accounts = [
   { key: "main", name: "Account 1", className: "main", current: "8108", target: "9999", rebirths: "158" },
@@ -17,8 +27,9 @@ const calendarMonthFormat = new Intl.DateTimeFormat("en-GB", { month: "long", ye
 const calendarDayFormat = new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 const accountCalculations = new Map();
 const previewPositions = new Map();
-let accountCount = 2;
-let calculatorMode = "goal";
+if (isBubble) accounts.forEach(account => { account.current = "0"; account.target = ""; account.rebirths = ""; });
+let accountCount = isBubble ? 1 : 2;
+let calculatorMode = isBubble ? "interval" : "goal";
 let durationMode = "duration";
 let modeStates = {};
 document.body.dataset.accountCount = String(accountCount);
@@ -44,11 +55,11 @@ function accountMarkup(account) {
         <div class="account-card__quick"><span id="${key}-quick-label">ETA</span><strong id="${key}-quick-eta">—</strong></div>
       </div>
       <div class="account-card__fields">
-        <div class="field"><label for="${key}-current">Starting rebirths</label><input id="${key}-current" type="number" min="0" step="1" inputmode="numeric" value="${current}"></div>
-        <div class="field target-field"><label for="${key}-target">Target rebirths</label><input id="${key}-target" type="number" min="0" step="1" inputmode="numeric" value="${target}"></div>
+        <div class="field"><label for="${key}-current">Starting ${statUnit}</label>${amountInput(`${key}-current`, current)}</div>
+        <div class="field target-field"><label for="${key}-target">Target ${statUnit}</label>${amountInput(`${key}-target`, target)}</div>
       </div>
-      <fieldset class="pace-group" aria-label="Rebirth pace"><div class="pace-fields">
-        <div class="field"><label for="${key}-rebirths">Rebirths</label><input id="${key}-rebirths" type="number" min="0" step="any" inputmode="decimal" value="${rebirths}"></div>
+      <fieldset class="pace-group" aria-label="${paceLabel} pace"><div class="pace-fields">
+        <div class="field"><label for="${key}-rebirths">${statLabel}</label>${amountInput(`${key}-rebirths`, rebirths, "any")}</div>
         <span class="pace-fields__per" aria-hidden="true">per</span>
         <div class="field"><label for="${key}-minutes">Minutes</label><input id="${key}-minutes" type="number" min="0.01" step="any" inputmode="decimal" value="10"></div>
       </div></fieldset>
@@ -60,7 +71,7 @@ function accountMarkup(account) {
           <div class="progress-tooltip" id="${key}-progress-tooltip" role="tooltip" aria-live="off" hidden>
             <div class="progress-tooltip__head"><strong id="${key}-hover-percent">—</strong><span id="${key}-hover-count">—</span></div>
             <div class="progress-tooltip__row"><span>At this point</span><strong id="${key}-hover-time">—</strong></div>
-            <div class="progress-tooltip__row interval-gain" hidden><span>Rebirths gained</span><strong id="${key}-hover-gain">—</strong></div>
+            <div class="progress-tooltip__row interval-gain" hidden><span>${statLabel} gained</span><strong id="${key}-hover-gain">—</strong></div>
             <div class="progress-tooltip__row"><span id="${key}-hover-finish-label">Estimated finish</span><strong id="${key}-hover-finish">—</strong></div>
           </div>
         </div>
@@ -85,7 +96,7 @@ function readDate(input) {
   return Number.isFinite(date.getTime()) ? date : null;
 }
 function readNumber(input) {
-  return input.value.trim() === "" ? NaN : Number(input.value);
+  return isBubble && input.hasAttribute("data-stat-amount") ? parseAmount(input.value) : input.value.trim() === "" ? NaN : Number(input.value);
 }
 function formatDuration(milliseconds) {
   if (milliseconds === null) return "No pace";
@@ -100,7 +111,7 @@ function paceForAccount(key) {
   const rebirths = readNumber($(`${key}-rebirths`));
   const minutes = readNumber($(`${key}-minutes`));
   if (!Number.isFinite(rebirths) || rebirths < 0 || !Number.isFinite(minutes) || minutes <= 0) {
-    return { error: "Enter rebirths and a number of minutes above zero." };
+    return { error: `Enter valid ${statUnit} and a number of minutes above zero.${isBubble ? " Amounts accept M, B and T." : ""}` };
   }
   return { rebirths, minutes };
 }
@@ -124,7 +135,7 @@ function showProgressTooltip(key, rawPercent) {
   let pointTime = formatDateTime(data.snapshot);
   if (data.mode === "interval") {
     pointTime = formatDateTime(new Date(data.snapshot.getTime() + data.durationMinutes * 60000 * percent / 100), false);
-    $(`${key}-hover-gain`).textContent = `≈ ${numberFormat.format(Math.floor(data.result.totalGain * percent / 100))}`;
+    $(`${key}-hover-gain`).textContent = `≈ ${amountFormat.format(Math.floor(data.result.totalGain * percent / 100))}`;
   } else if (count !== data.current) {
     const timestamp = data.snapshot.getTime() + (count - data.current) * data.pace.minutes / data.pace.rebirths * 60000;
     pointTime = data.pace.rebirths === 0 ? "No pace estimate"
@@ -134,7 +145,7 @@ function showProgressTooltip(key, rawPercent) {
   const goalTime = data.result.eta ? formatDateTime(data.result.eta, data.mode !== "interval")
       : data.pace.rebirths === 0 ? "No pace" : "Out of range";
   $(`${key}-hover-percent`).textContent = `${percentFormat.format(percent)}%`;
-  $(`${key}-hover-count`).textContent = `${numberFormat.format(count)} rebirths`;
+  $(`${key}-hover-count`).textContent = `${amountFormat.format(count)} ${statUnit}`;
   $(`${key}-hover-time`).textContent = pointTime;
   $(`${key}-hover-finish`).textContent = goalTime;
 
@@ -153,8 +164,11 @@ function showProgressTooltip(key, rawPercent) {
 function clearResult(key, message, neutral = false) {
   accountCalculations.delete(key);
   hideProgressTooltip(key);
-  for (const id of ["progress-text", "eta", "eta-date", "remaining", "duration", "projected"]) $(`${key}-${id}`).textContent = "—";
-  $(`${key}-eta-label`).textContent = calculatorMode === "interval" ? "Rebirths at interval end" : "Estimated finish";
+  for (const id of ["progress-text", "eta", "eta-date", "remaining", "duration", "projected"]) {
+    $(`${key}-${id}`).textContent = "—";
+    $(`${key}-${id}`).removeAttribute("title");
+  }
+  $(`${key}-eta-label`).textContent = calculatorMode === "interval" ? `${statLabel} at interval end` : "Estimated finish";
   $(`${key}-quick-eta`).textContent = "—";
   $(`${key}-progress-bar`).style.width = "0%";
   $(`${key}-progress-bar`).parentElement.setAttribute("aria-valuenow", "0");
@@ -169,7 +183,7 @@ function renderAccount(key, common) {
   const isInterval = calculatorMode === "interval";
   if (!Number.isFinite(current) || current < 0 || (!isInterval && (!Number.isFinite(target) || target < 0))) {
     const blank = $(`${key}-current`).value.trim() === "" || (!isInterval && $(`${key}-target`).value.trim() === "");
-    clearResult(key, blank ? "" : "Counts must be zero or greater.");
+    clearResult(key, blank ? "" : isBubble ? "Enter a valid amount, for example 250M or 1.5B (up to 9,007,199,254,740,991)." : "Counts must be zero or greater.");
     return;
   }
   const pace = paceForAccount(key);
@@ -192,14 +206,14 @@ function renderAccount(key, common) {
   $(`${key}-progress-bar`).style.width = `${result.progress}%`;
   $(`${key}-progress-bar`).parentElement.setAttribute("aria-valuenow", result.progress.toFixed(1));
   $(`${key}-progress-bar`).parentElement.setAttribute("aria-valuetext", isInterval
-    ? `${percentFormat.format(result.progress)}% of the interval elapsed, estimated ${numberFormat.format(Math.floor(result.projected))} rebirths now`
-    : `Estimated ${percentFormat.format(result.progress)}%, ${numberFormat.format(Math.floor(result.projected))} of ${numberFormat.format(target)} rebirths`);
-  $(`${key}-remaining`).textContent = isInterval ? `≈ ${numberFormat.format(Math.floor(result.totalGain))}` : numberFormat.format(Math.ceil(result.remaining));
-  $(`${key}-projected`).textContent = `≈ ${numberFormat.format(Math.floor(result.projected))} rebirths`;
+    ? `${percentFormat.format(result.progress)}% of the interval elapsed, estimated ${amountFormat.format(Math.floor(result.projected))} ${statUnit} now`
+    : `Estimated ${percentFormat.format(result.progress)}%, ${amountFormat.format(Math.floor(result.projected))} of ${amountFormat.format(target)} ${statUnit}`);
+  $(`${key}-remaining`).textContent = isInterval ? `≈ ${amountFormat.format(Math.floor(result.totalGain))}` : amountFormat.format(Math.ceil(result.remaining));
+  $(`${key}-projected`).textContent = `≈ ${amountFormat.format(Math.floor(result.projected))} ${statUnit}`;
   $(`${key}-duration`).textContent = formatDuration(result.activeDuration);
   if (isInterval) {
-    $(`${key}-eta-label`).textContent = "Rebirths at interval end";
-    $(`${key}-eta`).textContent = `≈ ${numberFormat.format(Math.floor(result.finalCount))}`;
+    $(`${key}-eta-label`).textContent = `${statLabel} at interval end`;
+    $(`${key}-eta`).textContent = `≈ ${amountFormat.format(Math.floor(result.finalCount))}`;
     $(`${key}-eta-date`).textContent = `${result.reached ? "Ended" : "Ends"} ${formatDateTime(result.eta, false)}`;
     $(`${key}-quick-eta`).textContent = result.reached ? "Done" : timeFormat.format(result.eta);
   } else if (result.eta) {
@@ -213,6 +227,11 @@ function renderAccount(key, common) {
     $(`${key}-eta`).textContent = pace.rebirths === 0 ? "No pace" : "Out of range";
     $(`${key}-eta-date`).textContent = "—";
     $(`${key}-quick-eta`).textContent = pace.rebirths === 0 ? "No pace" : "—";
+  }
+  if (isBubble) {
+    for (const [field, value] of [["remaining", isInterval ? result.totalGain : result.remaining], ["projected", result.projected], ["eta", isInterval ? result.finalCount : NaN]]) {
+      $(`${key}-${field}`).title = Number.isFinite(value) ? `${numberFormat.format(Math.floor(value))} bubbles` : "";
+    }
   }
   $(`${key}-message`).textContent = "";
   $(`${key}-message`).classList.remove("is-neutral");
@@ -249,7 +268,7 @@ function render() {
 }
 
 function initNumberControls(root) {
-  root.querySelectorAll('input[type="number"]').forEach((input) => {
+  root.querySelectorAll('input[type="number"], input[data-stat-amount]').forEach((input) => {
     if (input.closest(".number-control")) return;
     const label = input.dataset.stepLabel || input.labels?.[0]?.textContent.trim() || "value";
     const control = document.createElement("div");
@@ -265,6 +284,12 @@ function initNumberControls(root) {
 }
 
 function stepNumber(input, direction) {
+  if (isBubble && input.hasAttribute("data-stat-amount")) {
+    input.value = stepAmount(input.value, direction);
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.focus();
+    return;
+  }
   const step = Number(input.dataset.stepSize || (input.step === "any" ? 1 : input.step) || 1);
   const min = input.min === "" ? -Infinity : Number(input.min);
   const max = input.max === "" ? Infinity : Number(input.max);
@@ -569,7 +594,7 @@ document.addEventListener("pointerdown", (event) => {
     for (const account of accounts) hideProgressTooltip(account.key);
   }
 });
-const storageKey = "rebirth-calculator:v1";
+const storageKey = isBubble ? "bubble-calculator:v1" : "rebirth-calculator:v1";
 const accountFields = ["current", "target", "rebirths", "minutes"];
 
 function saveState() {
@@ -629,12 +654,12 @@ function syncCalculatorMode() {
   document.body.dataset.calculatorMode = calculatorMode;
   $("interval-settings").hidden = !isInterval;
   $("calculator-description").textContent = isInterval
-    ? "Set your starting rebirths and pace to see how much each account gains over time."
-    : "Set your rebirth counts and pace to see when each account reaches its goal.";
+    ? `Set your starting ${statUnit} and pace to see how much each account gains over time.`
+    : `Set your ${countNoun} counts and pace to see when each account reaches its goal.`;
   document.querySelector('label[for="snapshot"]').textContent = isInterval ? "Interval starts at" : "Counts recorded at";
   $("snapshot-help").textContent = isInterval
     ? "Enter the counts you had at this starting time. The interval keeps the same end when you return. Choose Now in this calendar when recording fresh counts."
-    : "Enter the rebirth counts you had at this time. This saved starting point keeps your finish time fixed. Estimates assume you keep rebirthing at the entered pace.";
+    : `Enter the ${countNoun} counts you had at this time. This saved starting point keeps your finish time fixed. Estimates assume you keep gaining ${statUnit} at the entered pace.`;
   $("snapshot-picker").setAttribute("aria-label", isInterval ? "Interval start date and time" : "Recorded date and time");
   document.querySelector('[data-date-for="snapshot"]').setAttribute("aria-label", isInterval ? "Choose interval start date and time" : "Choose recorded date and time");
   for (const {key} of accounts) {
@@ -643,7 +668,7 @@ function syncCalculatorMode() {
     card.querySelector(".interval-gain").hidden = !isInterval;
     $(`${key}-quick-label`).textContent = isInterval ? "ENDS" : "ETA";
     $(`${key}-progress-label`).textContent = isInterval ? "Interval progress" : "Estimated progress";
-    $(`${key}-remaining-label`).textContent = isInterval ? "Rebirths gained" : "Remaining";
+    $(`${key}-remaining-label`).textContent = isInterval ? `${statLabel} gained` : "Remaining";
     $(`${key}-hover-finish-label`).textContent = isInterval ? "Interval ends" : "Estimated finish";
     hideProgressTooltip(key);
   }
@@ -738,7 +763,7 @@ restoreState();
 syncCalculatorMode();
 // Persist the initial timestamp once, including migration from older saved inputs.
 saveState();
-document.querySelectorAll('#accounts-grid input[type="number"], #interval-settings input[type="number"]').forEach((input) => {
+document.querySelectorAll('#accounts-grid input[data-stat-amount], #accounts-grid input[type="number"], #interval-settings input[type="number"]').forEach((input) => {
   const update = () => { render(); saveState(); };
   input.addEventListener("input", update);
   input.addEventListener("change", update);

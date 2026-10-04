@@ -1,13 +1,15 @@
-# BGSI Rebirth Calculator
+# BGSI Stat Calculator
 
-Track your rebirth grind toward a target or across a fixed time interval, with saved starting counts and your own pace.
+Forecast your BGSI rebirths and bubbles toward a target or across a fixed time interval, with saved starting counts and your own pace.
 
-**[Open the calculator](https://0szysza.github.io/rebirth/)** · [CCU Tracker](https://0szysza.github.io/trackccu/) · [Tool hub](https://0szysza.github.io/)
+**[Rebirth Calculator](https://0szysza.github.io/rebirth/)** · **[Bubble Calculator](https://0szysza.github.io/bubble/)** · [CCU Tracker](https://0szysza.github.io/trackccu/) · [Tool hub](https://0szysza.github.io/)
 
 ## Features
 
 | Feature | What it does |
 | --- | --- |
+| Rebirth and Bubble sections | Switch between `/rebirth/` and `/bubble/` in the header. Each keeps its own saved inputs, names and settings. |
+| Bubble amount shortcuts | Enter plain numbers or K/M/B/T suffixes, including decimals: `250M`, `1.5B`, `0.25T`. Results use compact units with exact totals on hover. |
 | Three calculation options | One selector offers **Reach a goal**, **For a duration** and **Until a time**. Estimate a goal finish time or the total and gained rebirths over a duration or up to a deadline. |
 | 1, 2 or 3 accounts | Choose how many accounts to track. Every account keeps its own inputs and occupies a full-width card. |
 | Custom account names | Rename Account 1/2/3 with the edit icon; save, cancel or reset to the default name. Reset appears only while editing a custom name. |
@@ -25,7 +27,20 @@ Track your rebirth grind toward a target or across a fixed time interval, with s
 | Shared navigation | The Tools dropdown opens CCU Tracker; the header arrow opens the tool hub. Social links stay in the footer. |
 | Link previews | Static Discord/social metadata and a branded 1200 × 630 cover. |
 
-## How to use it
+## Bubble Calculator
+
+Open **Bubble** in the header. Enter **Starting bubbles**, then your **Bubbles per Minutes** pace; minutes default to **10**. Choose a duration in hours/minutes, an exact end date/time, or a target. Results show total bubbles, bubbles gained, estimated current bubbles, time left and an interactive progress bar.
+
+| Shortcut | Meaning | Example |
+| --- | --- | --- |
+| K | Thousand (1,000) | `250K` = 250,000 |
+| M | Million (1,000,000) | `250M` = 250,000,000 |
+| B | Billion (1,000,000,000) | `1.5B` = 1,500,000,000 |
+| T | Trillion (1,000,000,000,000) | `0.25T` = 250,000,000,000 |
+
+Uppercase and lowercase suffixes work. You can paste a full number with thousands separators (`1,500,000,000`) or use a decimal comma (`1,5B`). Inputs above JavaScript’s maximum safe integer (9,007,199,254,740,991) are rejected. Forecasts assume a constant pace and remain estimates.
+
+## How to use Rebirth
 
 ### Reach a goal
 
