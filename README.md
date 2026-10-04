@@ -2,13 +2,13 @@
 
 Forecast your BGSI rebirths and bubbles toward a target or across a fixed time interval, with saved starting counts and your own pace.
 
-**[Rebirth Calculator](https://0szysza.github.io/rebirth/rebirth/)** · **[Bubble Calculator](https://0szysza.github.io/rebirth/bubble/)** · [CCU Tracker](https://0szysza.github.io/trackccu/) · [Tool hub](https://0szysza.github.io/)
+**[Rebirth Calculator](https://0szysza.github.io/stat/rebirth/)** · **[Bubble Calculator](https://0szysza.github.io/stat/bubble/)** · [CCU Tracker](https://0szysza.github.io/trackccu/) · [Tool hub](https://0szysza.github.io/)
 
 ## Features
 
 | Feature | What it does |
 | --- | --- |
-| Rebirth and Bubble sections | Switch between `/rebirth/rebirth/` and `/rebirth/bubble/` in the header. Each keeps its own saved inputs, names and settings. |
+| Rebirth and Bubble sections | Switch between `/stat/rebirth/` and `/stat/bubble/` in the header. Each keeps its own saved inputs, names and settings. |
 | Bubble amount shortcuts | Enter plain numbers or K/M/B/T suffixes, including decimals: `250M`, `1.5B`, `0.25T`. Results use compact units with exact totals on hover. |
 | Three calculation options | One selector offers **Reach a goal**, **For a duration** and **Until a time**. Estimate a goal finish time or the total and gained rebirths over a duration or up to a deadline. |
 | 1, 2 or 3 accounts | Choose how many accounts to track. Every account keeps its own inputs and occupies a full-width card. |
